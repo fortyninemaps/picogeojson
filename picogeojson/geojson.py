@@ -19,14 +19,32 @@ from collections import namedtuple
 from functools import reduce
 
 Point = namedtuple('Point', ['coordinates', 'crs'])
+Point.__new__.__defaults__ = (None,)
+
 MultiPoint = namedtuple('MultiPoint', ['coordinates', 'crs'])
+MultiPoint.__new__.__defaults__ = (None,)
+
 LineString = namedtuple('LineString', ['coordinates', 'crs'])
+LineString.__new__.__defaults__ = (None,)
+
 MultiLineString = namedtuple('MultiLineString', ['coordinates', 'crs'])
+MultiLineString.__new__.__defaults__ = (None,)
+
 Polygon = namedtuple('Polygon', ['coordinates', 'crs'])
+Polygon.__new__.__defaults__ = (None,)
+
 MultiPolygon = namedtuple('MultiPolygon', ['coordinates', 'crs'])
+MultiPolygon.__new__.__defaults__ = (None,)
+
 GeometryCollection = namedtuple('GeometryCollection', ['geometries', 'crs'])
+GeometryCollection.__new__.__defaults__ = (None,)
+
 Feature = namedtuple('Feature', ['geometry', 'properties', 'id', 'crs'])
+Feature.__new__.__defaults__ = (None, None)
+
 FeatureCollection = namedtuple('FeatureCollection', ['features', 'crs'])
+FeatureCollection.__new__.__defaults__ = (None,)
+
 
 DEFAULTCRS = {"type": "name",
               "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
@@ -168,38 +186,29 @@ class Serializer(object):
         return
 
     def __call__(self, geom, indent=None):
-        #return self.enc.encode(self.geometry_asdict(geom), indent=indent)
         return json.dumps(self.geometry_asdict(geom), indent=indent,
                           cls=NumpyAwareJSONEncoder)
 
     def geometry_asdict(self, geom):
 
-        if hasattr(geom, "properties"):
+        if isinstance(geom, Feature):
             return self.feature_asdict(geom)
-
-        elif hasattr(geom, "geometries"):
-            return self.geometry_collection_asdict(geom)
-
-        elif hasattr(geom, "features"):
-            return self.feature_collection_asdict(geom)
-
-        elif isinstance(geom, MultiPoint):
-            return self._geometry_asdict(geom, "MultiPoint")
-
         elif isinstance(geom, Point):
             return self._geometry_asdict(geom, "Point")
-
-        elif isinstance(geom, MultiLineString):
-            return self._geometry_asdict(geom, "MultiLineString")
-
         elif isinstance(geom, LineString):
             return self._geometry_asdict(geom, "LineString")
-
-        elif isinstance(geom, MultiPolygon):
-            return self._geometry_asdict(geom, "MultiPolygon")
-
         elif isinstance(geom, Polygon):
             return self._geometry_asdict(geom, "Polygon")
+        elif isinstance(geom, MultiPoint):
+            return self._geometry_asdict(geom, "MultiPoint")
+        elif isinstance(geom, MultiLineString):
+            return self._geometry_asdict(geom, "MultiLineString")
+        elif isinstance(geom, MultiPolygon):
+            return self._geometry_asdict(geom, "MultiPolygon")
+        elif isinstance(geom, GeometryCollection):
+            return self.geometry_collection_asdict(geom)
+        elif isinstance(geom, FeatureCollection):
+            return self.feature_collection_asdict(geom)
         else:
             raise TypeError("cannot serialize type '{0}'".format(type(geom)))
 
