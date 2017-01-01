@@ -15,36 +15,13 @@ tuples.
 """
 
 import json
-from collections import namedtuple
 from functools import reduce
 
-Point = namedtuple('Point', ['coordinates', 'crs'])
-Point.__new__.__defaults__ = (None,)
+from .types import (Point, LineString, Polygon,
+                    MultiPoint, MultiLineString, MultiPolygon,
+                    GeometryCollection, Feature, FeatureCollection)
 
-MultiPoint = namedtuple('MultiPoint', ['coordinates', 'crs'])
-MultiPoint.__new__.__defaults__ = (None,)
-
-LineString = namedtuple('LineString', ['coordinates', 'crs'])
-LineString.__new__.__defaults__ = (None,)
-
-MultiLineString = namedtuple('MultiLineString', ['coordinates', 'crs'])
-MultiLineString.__new__.__defaults__ = (None,)
-
-Polygon = namedtuple('Polygon', ['coordinates', 'crs'])
-Polygon.__new__.__defaults__ = (None,)
-
-MultiPolygon = namedtuple('MultiPolygon', ['coordinates', 'crs'])
-MultiPolygon.__new__.__defaults__ = (None,)
-
-GeometryCollection = namedtuple('GeometryCollection', ['geometries', 'crs'])
-GeometryCollection.__new__.__defaults__ = (None,)
-
-Feature = namedtuple('Feature', ['geometry', 'properties', 'id', 'crs'])
-Feature.__new__.__defaults__ = (None, None)
-
-FeatureCollection = namedtuple('FeatureCollection', ['features', 'crs'])
-FeatureCollection.__new__.__defaults__ = (None,)
-
+from .antimeridian import antimeridian_cut
 
 DEFAULTCRS = {"type": "name",
               "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
@@ -176,13 +153,15 @@ class Serializer(object):
 
     Usage:
 
-        serializer = GeoJSONSerializer()
+        serializer = GeoJSONSerializer(antimeridian_cutting=True)
         json_string = serializer(named_tuple)
+
+    *antimeridian_cutting* indicates whether geometries spanning the dateline
+    should be split, possibly changing type in the process (e.g. LineString to
+    MultiLineString)
     """
 
-    def __init__(self):
-        # Previously used encoder directly, but for now calling json.dumps
-        #self.enc = NumpyAwareJSONEncoder()
+    def __init__(self, antimeridian_cutting=True):
         return
 
     def __call__(self, geom, indent=None):

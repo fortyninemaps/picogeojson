@@ -188,5 +188,26 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(d.get("crs", ""), DEFAULTCRS)
         return
 
+class AntimerdianTests(unittest.TestCase):
+
+    def test_linestring_crosses(self):
+        self.assertTrue(pgj.antimeridian.crosses_antimeridian(
+                            pgj.LineString([(172, 34), (178, 36), (-179, 37), (-177, 39)])
+                        ))
+
+        self.assertFalse(pgj.antimeridian.crosses_antimeridian(
+                            pgj.LineString([(172, 34), (178, 36), (179, 37), (178, 39)])
+                        ))
+
+    def test_linestring_split(self):
+        res = pgj.antimeridian.antimeridian_cut(
+                pgj.LineString([(172, 34), (178, 36), (-179, 37), (-177, 39)])
+                )
+        self.assertTrue(isinstance(res, pgj.MultiLineString))
+        self.assertEqual(len(res.coordinates), 2)
+        self.assertEqual(res.coordinates[0][-1], (180, 36.33333333))
+        self.assertEqual(res.coordinates[1][0], (-179.99999999, 36.33333333))
+
+
 if __name__ == "__main__":
     unittest.main()
