@@ -145,5 +145,39 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(list(multipolygon.coordinates), list(d["coordinates"]))
         return
 
+    def test_serialize_geometrycollection(self):
+        collection = pgj.GeometryCollection([pgj.Point((3, 4), None),
+                                             pgj.Point((5, 6), None),
+                                             pgj.LineString([(1, 2), (3, 4), (3, 2)], None)],
+                                            DEFAULTCRS)
+        s = self.serializer(collection)
+        d = json.loads(s)
+        self.assertEqual(len(d.get("geometries", [])), 3)
+        self.assertEqual(d.get("crs", ""), DEFAULTCRS)
+        return
+
+    def test_serialize_feature(self):
+        feature = pgj.Feature(pgj.Point((1,2), None), {"type": "city"}, 1, DEFAULTCRS)
+        s = self.serializer(feature)
+        d = json.loads(s)
+        self.assertEqual(d.get("geometry", {}).get("type", ""), "Point")
+        self.assertEqual(d.get("id", 0), 1)
+        self.assertEqual(d.get("properties", {}).get("type", ""), "city")
+        return
+
+    def test_serialize_featurecollection(self):
+        collection = pgj.FeatureCollection(
+                [pgj.Feature(pgj.Point((7,3), None), {"type": "city"}, None, None),
+                 pgj.Feature(pgj.LineString([(1,2), (1,3), (2, 2)], None),
+                             {"type": "river"}, None, None),
+                 pgj.Feature(pgj.Polygon([[(1,2), (1,3), (2, 2), (2, 1)]], None),
+                             {"type": "boundary"}, None, None)],
+                DEFAULTCRS)
+        s = self.serializer(collection)
+        d = json.loads(s)
+        self.assertEqual(len(d.get("features", [])), 3)
+        self.assertEqual(d.get("crs", ""), DEFAULTCRS)
+        return
+
 if __name__ == "__main__":
     unittest.main()

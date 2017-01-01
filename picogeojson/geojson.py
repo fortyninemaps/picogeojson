@@ -236,33 +236,42 @@ class Serializer(object):
                                     'type': linktype}}
             return d
         else:
-            raise ValueError("either a urn must be specified or a CRS object "
-                             "provided")
-        return
+            return None
 
     def _geometry_asdict(self, geom, name):
         if not isinstance(geom.crs, dict):
             crs = self.crsdict(geom.crs)
         else:
             crs = geom.crs
-        return {"type": name,
-                "coordinates": geom.coordinates,
-                "crs": crs}
+        d = {"type": name,
+             "coordinates": geom.coordinates}
+        if crs is not None:
+            d["crs"] = crs
+        return d
 
     def feature_asdict(self, feature):
-        return {"type": "Feature",
-                "geometry": self.geometry_asdict(feature.geometry),
-                "properties": feature.properties}
+        d = {"type": "Feature",
+             "geometry": self.geometry_asdict(feature.geometry),
+             "properties": feature.properties}
+        if feature.id is not None:
+            d["id"] = feature.id
+        if feature.crs is not None:
+            d["crs"] = feature.crs
+        return d
 
-    def geometry_collection_asdict(self, geometry_collection):
-        return {"type": "GeometryCollection",
-                "geometries": [self.geometry_asdict(g)
-                               for g in geometry_collection.geometries]}
+    def geometry_collection_asdict(self, gcollection):
+        d = {"type": "GeometryCollection",
+             "geometries": [self.geometry_asdict(g) for g in gcollection.geometries]}
+        if gcollection.crs is not None:
+            d["crs"] = gcollection.crs
+        return d
 
-    def feature_collection_asdict(self, feature_collection):
-        return {"type": "FeatureCollection",
-                "features": [self.feature_asdict(f)
-                             for f in feature_collection.features]}
+    def feature_collection_asdict(self, fcollection):
+        d = {"type": "FeatureCollection",
+             "features": [self.feature_asdict(f) for f in fcollection.features]}
+        if fcollection.crs is not None:
+            d["crs"] = fcollection.crs
+        return d
 
 def asfixedlist(A):
     """ Recursively convert nested iterables or coordinates to nested lists at
