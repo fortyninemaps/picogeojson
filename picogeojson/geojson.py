@@ -96,23 +96,6 @@ class Deserializer(object):
         crs = d.get("crs", self.defaultcrs)
         return MultiPolygon(d["coordinates"], crs)
 
-    def parseGeometry(self, o):
-        t = o["type"]
-        if t == "Point":
-            return self.parsePoint(o)
-        elif t == "MultiPoint":
-            return self.parseMultiPoint(o)
-        elif t == "LineString":
-            return self.parseLineString(o)
-        elif t == "MultiLineString":
-            return self.parseMultiLineString(o)
-        elif t == "Polygon":
-            return self.parsePolygon(o)
-        elif t == "MultiPolygon":
-            return self.parseMultiPolygon(o)
-        else:
-            raise TypeError("Unrecognized type {0}".format(t))
-
     def parseGeometryCollection(self, o):
         crs = o.get("crs", self.defaultcrs)
         geoms = [self.parse(g) for g in o["geometries"]]
@@ -148,15 +131,27 @@ class Deserializer(object):
     def parse(self, d=None):
         if d is None:
             d = self.jsondict
-        if d["type"] == "GeometryCollection":
-            res = self.parseGeometryCollection(d)
-        elif d["type"] == "FeatureCollection":
-            res = self.parseFeatureCollection(d)
-        elif d["type"] == "Feature":
-            res = self.parseFeature(d)
+        t = d["type"]
+        if t == "FeatureCollection":
+            return self.parseFeatureCollection(d)
+        elif t == "Feature":
+            return self.parseFeature(d)
+        elif t == "Point":
+            return self.parsePoint(d)
+        elif t == "MultiPoint":
+            return self.parseMultiPoint(d)
+        elif t == "LineString":
+            return self.parseLineString(d)
+        elif t == "MultiLineString":
+            return self.parseMultiLineString(d)
+        elif t == "Polygon":
+            return self.parsePolygon(d)
+        elif t == "MultiPolygon":
+            return self.parseMultiPolygon(d)
+        elif t == "GeometryCollection":
+            return self.parseGeometryCollection(d)
         else:
-            res = self.parseGeometry(d)
-        return res
+            raise TypeError("Unrecognized type {0}".format(t))
 
 class Serializer(object):
     """ Class for converting GeoJSON named tuples to GeoJSON.

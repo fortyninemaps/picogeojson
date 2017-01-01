@@ -62,6 +62,15 @@ class DeserializerTests(unittest.TestCase):
              [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]])
         return
 
+    def test_geometrycollection_read(self):
+        with open(os.path.join(TESTDATA, 'geometrycollection.json')) as f:
+            reader = Deserializer(f)
+        res = reader.parse()
+        self.assertEqual(len(res.geometries), 2)
+        self.assertTrue(isinstance(res.geometries[0], pgj.Point))
+        self.assertTrue(isinstance(res.geometries[1], pgj.LineString))
+        return
+
     def test_featurecollection_read(self):
         path = os.path.join(TESTDATA, "featurecollection.json")
         with open(path) as f:
