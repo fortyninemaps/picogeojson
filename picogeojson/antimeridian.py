@@ -1,4 +1,7 @@
 # Implements antimeridian cutting
+# problems:
+# - splitting polygon holes on the antimeridian
+# - splitting multipolygons where not all parts cross antimeridian
 
 import itertools
 
@@ -14,8 +17,8 @@ def _seg_crosses(x0, x1):
 
 def _split(pt0, pt1):
     # compute offset from antimeridian
-    dx0 = abs((pt0[0] + 360) % 360 - 180)
-    dx1 = abs((pt1[0] + 360) % 360 - 180)
+    dx0 = float(abs((pt0[0] + 360) % 360 - 180))
+    dx1 = float(abs((pt1[0] + 360) % 360 - 180))
     return round((dx0*pt0[1] + dx1*pt1[1])/(dx0+dx1), 8)
 
 def _split_coordinate_string(coordinates):
