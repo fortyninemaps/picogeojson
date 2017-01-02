@@ -1,17 +1,10 @@
 """
-GeoJSON drivers for Karta
-
-Defines named tuples representing GeoJSON entities.
-
 Overview
 --------
 
-`GeoJSONReader` converts GeoJSON strings to named tuples.
+`Deserializer` converts GeoJSON strings or files to named tuples.
 
-`GeoJSONSerializer` converts named tuples to GeoJSON strings.
-
-`as_named_tuple` function converts karta.geometry classes to equivalent named
-tuples.
+`Serializer` validates and converts named tuples to GeoJSON strings.
 """
 
 import json
@@ -46,75 +39,85 @@ class NumpyAwareJSONEncoder(json.JSONEncoder):
 
 class Deserializer(object):
 
-    def __init__(self, finput, defaultcrs=DEFAULTCRS):
+    def __init__(self, defaultcrs=DEFAULTCRS):
         """ Create a reader-object for a GeoJSON-containing file or StreamIO
         object. Use as::
 
             with open(`fnm`, 'r') as f:
                 reader = GeoJSONReader(f)
         """
-        if hasattr(finput, 'read'):
-            self.jsondict = json.load(finput)
-        elif isinstance(finput, str):
-            try:
-                self.jsondict = json.loads(finput)
-            except ValueError:
-                with open(finput) as f:
-                    self.jsondict = json.load(f)
-        else:
-            raise TypeError("*finput* must be a file object, a JSON string, or "
-                            "a filename string")
-
+        self.jsondict = {}
         self.defaultcrs = defaultcrs
         return
 
-    def parsePoint(self, d):
+    def __call__(self, f):
+        try:
+            return self.load_json(f)
+        except ValueError:
+            return self.read_json(f)
+
+    def load_json(self, s):
+        self.jsondict = json.loads(s)
+        return self._deserialize()
+
+    def read_json(self, f):
+        if hasattr(f, 'read'):
+            self.jsondict = json.load(f)
+            return self.deserialize()
+        elif isinstance(f, str):
+            with open(f) as f:
+                self.jsondict = json.load(f)
+            return self.deserialize()
+        else:
+            raise TypeError("input must be a file object or a filename")
+
+    def _parsePoint(self, d):
         crs = d.get("crs", self.defaultcrs)
         return Point(d["coordinates"], crs)
 
-    def parseMultiPoint(self, d):
+    def _parseMultiPoint(self, d):
         crs = d.get("crs", self.defaultcrs)
         return MultiPoint(d["coordinates"], crs)
 
-    def parseLineString(self, d):
+    def _parseLineString(self, d):
         crs = d.get("crs", self.defaultcrs)
         return LineString(d["coordinates"], crs)
 
-    def parseMultiLineString(self, d):
+    def _parseMultiLineString(self, d):
         crs = d.get("crs", self.defaultcrs)
         return MultiLineString(d["coordinates"], crs)
 
-    def parsePolygon(self, d):
+    def _parsePolygon(self, d):
         crs = d.get("crs", self.defaultcrs)
         return Polygon(d["coordinates"], crs)
 
-    def parseMultiPolygon(self, d):
+    def _parseMultiPolygon(self, d):
         crs = d.get("crs", self.defaultcrs)
         return MultiPolygon(d["coordinates"], crs)
 
-    def parseGeometryCollection(self, o):
+    def _parseGeometryCollection(self, o):
         crs = o.get("crs", self.defaultcrs)
-        geoms = [self.parse(g) for g in o["geometries"]]
+        geoms = [self.deserialize(g) for g in o["geometries"]]
         return GeometryCollection(geoms, crs)
 
-    def parseFeature(self, o):
+    def _parseFeature(self, o):
         crs = o.get("crs", self.defaultcrs)
-        geom = self.parse(o["geometry"])
+        geom = self.deserialize(o["geometry"])
         if isinstance(geom, GeometryCollection):
             n = 1
         else:
             n = len(geom.coordinates)
-        prop = self.parseProperties(o["properties"], n)
+        prop = self._parseProperties(o["properties"], n)
         fid = o.get("id", None)
         return Feature(geom, prop, fid, crs)
 
-    def parseFeatureCollection(self, o):
+    def _parseFeatureCollection(self, o):
         crs = o.get("crs", self.defaultcrs)
-        features = [self.parseFeature(f) for f in o["features"]]
+        features = [self._parseFeature(f) for f in o["features"]]
         return FeatureCollection(features, crs)
 
     @staticmethod
-    def parseProperties(prop, geomlen):
+    def _parseProperties(prop, geomlen):
         d = {"scalar":{},
              "vector":{}}
         for key, value in prop.items():
@@ -124,28 +127,28 @@ class Deserializer(object):
                 d["scalar"][key] = value
         return d
 
-    def parse(self, d=None):
+    def deserialize(self, d=None):
         if d is None:
             d = self.jsondict
         t = d["type"]
         if t == "FeatureCollection":
-            return self.parseFeatureCollection(d)
+            return self._parseFeatureCollection(d)
         elif t == "Feature":
-            return self.parseFeature(d)
+            return self._parseFeature(d)
         elif t == "Point":
-            return self.parsePoint(d)
+            return self._parsePoint(d)
         elif t == "MultiPoint":
-            return self.parseMultiPoint(d)
+            return self._parseMultiPoint(d)
         elif t == "LineString":
-            return self.parseLineString(d)
+            return self._parseLineString(d)
         elif t == "MultiLineString":
-            return self.parseMultiLineString(d)
+            return self._parseMultiLineString(d)
         elif t == "Polygon":
-            return self.parsePolygon(d)
+            return self._parsePolygon(d)
         elif t == "MultiPolygon":
-            return self.parseMultiPolygon(d)
+            return self._parseMultiPolygon(d)
         elif t == "GeometryCollection":
-            return self.parseGeometryCollection(d)
+            return self._parseGeometryCollection(d)
         else:
             raise TypeError("Unrecognized type {0}".format(t))
 

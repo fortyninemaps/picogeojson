@@ -15,47 +15,39 @@ TESTDATA = "tests/"
 
 class DeserializerTests(unittest.TestCase):
 
+    def setUp(self):
+        self.deserializer = Deserializer()
+        return
+
     def test_point_read(self):
-        with open(os.path.join(TESTDATA, 'point.json')) as f:
-            reader = Deserializer(f)
-        res = reader.parse()
+        res = self.deserializer.read_json(os.path.join(TESTDATA, 'point.json'))
         self.assertEqual(res.coordinates, [100.0, 0.0])
         return
 
     def test_linestring_read(self):
-        with open(os.path.join(TESTDATA, 'linestring.json')) as f:
-            reader = Deserializer(f)
-        res = reader.parse()
+        res = self.deserializer.read_json(os.path.join(TESTDATA, 'linestring.json'))
         self.assertEqual(res.coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_polygon_read(self):
-        with open(os.path.join(TESTDATA, 'polygon.json')) as f:
-            reader = Deserializer(f)
-        res = reader.parse()
+        res = self.deserializer.read_json(os.path.join(TESTDATA, 'polygon.json'))
         self.assertEqual(res.coordinates,
             [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
         return
 
     def test_multipoint_read(self):
-        with open(os.path.join(TESTDATA, 'multipoint.json')) as f:
-            reader = Deserializer(f)
-        res = reader.parse()
+        res = self.deserializer.read_json(os.path.join(TESTDATA, 'multipoint.json'))
         self.assertEqual(res.coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_multilinestring_read(self):
-        with open(os.path.join(TESTDATA, 'multilinestring.json')) as f:
-            reader = Deserializer(f)
-        res = reader.parse()
+        res = self.deserializer.read_json(os.path.join(TESTDATA, 'multilinestring.json'))
         self.assertEqual(res.coordinates, [[[100.0, 0.0], [101.0, 1.0]],
                                               [[102.0, 2.0], [103.0, 3.0]]])
         return
 
     def test_multipolygon_read(self):
-        with open(os.path.join(TESTDATA, 'multipolygon.json')) as f:
-            reader = Deserializer(f)
-        res = reader.parse()
+        res = self.deserializer.read_json(os.path.join(TESTDATA, 'multipolygon.json'))
         self.assertEqual(res.coordinates,
             [[[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
              [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
@@ -63,19 +55,14 @@ class DeserializerTests(unittest.TestCase):
         return
 
     def test_geometrycollection_read(self):
-        with open(os.path.join(TESTDATA, 'geometrycollection.json')) as f:
-            reader = Deserializer(f)
-        res = reader.parse()
+        res = self.deserializer.read_json(os.path.join(TESTDATA, 'geometrycollection.json'))
         self.assertEqual(len(res.geometries), 2)
         self.assertTrue(isinstance(res.geometries[0], pgj.Point))
         self.assertTrue(isinstance(res.geometries[1], pgj.LineString))
         return
 
     def test_featurecollection_read(self):
-        path = os.path.join(TESTDATA, "featurecollection.json")
-        with open(path) as f:
-            reader = Deserializer(f)
-        fc = reader.parse()
+        fc = self.deserializer.read_json(os.path.join(TESTDATA, 'featurecollection.json'))
         self.assertTrue(isinstance(fc.features[0].geometry, pgj.Point))
         self.assertEqual(fc.features[0].geometry.coordinates, [102.0, 0.5])
         self.assertEqual(fc.features[0].properties["scalar"], {"prop0": "value0"})
