@@ -7,43 +7,95 @@ from .types import (LineString, MultiLineString,
                     GeometryCollection,
                     Feature, FeatureCollection)
 
-def crosses_antimeridian(obj):
+PRECISION = 1e-8
+
+def _seg_crosses(x0, x1):
+    return abs(x0-x1) > 180
+
+def _split(pt0, pt1):
+    # compute offset from antimeridian
+    dx0 = abs((pt0[0] + 360) % 360 - 180)
+    dx1 = abs((pt1[0] + 360) % 360 - 180)
+    return round((dx0*pt0[1] + dx1*pt1[1])/(dx0+dx1), 8)
+
+def _split_coordinate_string(coordinates):
+    parts = []
+    coords = [coordinates[0]]
+    for i in range(len(coordinates)-1):
+        pt0 = coordinates[i]
+        pt1 = coordinates[i+1]
+        if _seg_crosses(pt0[0], pt1[0]):
+            ymerid = _split(pt0, pt1)
+            if pt0[0]>0:
+                # moving east
+                coords.append((180, ymerid))
+            else:
+                coords.append((-180+PRECISION, ymerid))
+            parts.append(coords)
+            if pt0[0]>0:
+                # moving east
+                coords = [(-180+PRECISION, ymerid), pt1]
+            else:
+                coords = [(180, ymerid), pt1]
+        else:
+            coords.append(pt1)
+    parts.append(coords)
+    return parts
+
+def _close_ring(coordinates):
+    if coordinates[0] != coordinates[-1]:
+        coordinates.append(coordinates[0])
+    return coordinates
+
+def _split_ring(ring):
+    parts = _split_coordinate_string(ring)
+    if len(parts) != 1 and parts[0][0] != 180:
+        p = parts.pop()
+        parts[0].extend(p)
+    return [_close_ring(p) for p in parts]
+
+def contains(poly0, poly1):
+    """ Does poly0 contain poly1?
+    As an initial implementation, returns True if any vertex of poly1 is within
+    poly0.
+    """
+    # check for bounding box overlap
+    bb0 = (min(p[0] for p in poly0), min(p[1] for p in poly0),
+           max(p[0] for p in poly0), max(p[1] for p in poly0))
+    bb1 = (min(p[0] for p in poly1), min(p[1] for p in poly1),
+           max(p[0] for p in poly1), max(p[1] for p in poly1))
+    if ((bb0[0] > bb1[2])
+            or (bb0[2] < bb1[0])
+            or (bb0[1] > bb1[3])
+            or (bb0[3] < bb1[1])):
+        return False
+
+    # check each vertex
+    def _isleft(p, p0, p1):
+        return ((p1[0]-p0[0])*(p[1]-p0[1]) - (p[0]-p0[0])*(p1[1]-p0[1])) > 0
+
+    for p in poly1:
+        wn = 0
+        for i in range(len(poly0)-1):
+            p0 = poly0[i]
+            p1 = poly0[i+1]
+            if p0[1] <= p[1] < p1[1]:       # upward crossing
+                if _isleft(p, p0, p1):
+                    wn += 1
+            elif p0[1] >= p[1] > p1[1]:
+                if not _isleft(p, p0, p1):
+                    wn -= 1
+        if wn != 0:
+            return True
+    return False
+
+def _crosses_antimeridian(coordinates):
     """ Determines whether a geometry or feature crosses the antimeridian be
     searching exhaustively.
     """
-    def _seg_crosses(x0, x1):
-        return abs(x0-x1) > 180
-
-    if isinstance(obj, LineString):
-        for i in range(len(obj.coordinates)-1):
-            if _seg_crosses(obj.coordinates[i][0], obj.coordinates[i+1][0]):
-                return True
-    elif isinstance(obj, MultiLineString):
-        for coords in obj.coordinates:
-            for i in range(len(coords)-1):
-                if _seg_crosses(coords[i][0], coords[i+1][0]):
-                    return True
-    if isinstance(obj, Polygon):
-        coords = obj.coordinates[0]
-        for coords in obj.coordinates:
-            for i in range(len(coords)-1):
-                if _seg_crosses(coords[i][0], coords[i+1][0]):
-                    return True
-    elif isinstance(obj, MultiPolygon):
-        for coords in obj.coordinates:
-            for i in range(len(coords[0])-1):
-                if _seg_crosses(coords[0][i][0], coords[0][i+1][0]):
-                    return True
-    elif isinstance(obj, GeometryCollection):
-        for geom in obj.geometries:
-            if crosses_antimeridian(geom):
-                return True
-    elif isinstance(obj, Feature):
-        return crosses_antimeridian(obj.geometry)
-    elif isinstance(obj, FeatureCollection):
-        for feature in obj.features:
-            if crosses_antimeridian(feature.geometry):
-                return True
+    for i in range(len(coordinates)-1):
+        if _seg_crosses(coordinates[i][0], coordinates[i+1][0]):
+            return True
     return False
 
 def antimeridian_cut(obj):
@@ -63,54 +115,45 @@ def antimeridian_cut(obj):
 
     If no split is required, the original argument is returned.
     """
-
-    def _seg_crosses(x0, x1):
-        return abs(x0-x1) > 180
-
-    def _split(pt0, pt1):
-        # compute offset from antimeridian
-        dx0 = abs((pt0[0] + 360) % 360 - 180)
-        dx1 = abs((pt1[0] + 360) % 360 - 180)
-        return (180, round((dx0*pt0[1] + dx1*pt1[1])/(dx0+dx1), 8))
-
-    def _split_coordinates(coordinates):
-        parts = []
-        coords = [obj.coordinates[0]]
-        for i in range(len(obj.coordinates)-1):
-            pt0 = obj.coordinates[i]
-            pt1 = obj.coordinates[i+1]
-            if _seg_crosses(pt0[0], pt1[0]):
-                px = _split(pt0, pt1)
-                coords.append(px)
-                parts.append(coords)
-                coords = [(-179.99999999, px[1]), pt1]
+    if isinstance(obj, LineString):
+        if _crosses_antimeridian(obj.coordinates):
+            parts = _split_coordinate_string(obj.coordinates)
+            return MultiLineString(parts, obj.crs)
+        else:
+            return obj
+    elif isinstance(obj, Polygon):
+        if _crosses_antimeridian(obj.coordinates[0]):
+            outer_rings = _split_ring(obj.coordinates[0])
+            if len(obj.coordinates) != 1:
+                inner_rings = list(itertools.chain(*[_split_ring(hole)
+                                    for hole in obj.coordinates[1:]]))
             else:
-                coords.append(pt1)
-        parts.append(coords)
-        return parts
-
-    if crosses_antimeridian(obj):
-        if isinstance(obj, LineString):
-            parts = _split_coordinates(obj.coordinates)
-            return MultiLineString(parts, obj.crs)
-        elif isinstance(obj, Polygon):
-
+                inner_rings = []
+            parts = []
+            for ring in outer_rings:
+                part = [ring]
+                for hole in inner_rings:
+                    if contains(ring, hole):
+                        part.append(hole)
+                parts.append(part)
             return MultiPolygon(parts, obj.crs)
-        elif isinstance(obj, MultiLineString):
-
-            return MultiLineString(parts, obj.crs)
-        elif isinstance(obj, MultiPolygon):
-
-            return MultiPolygon(parts, obj.crs)
-        elif isinstance(obj, GeometryCollection):
-            parts = list(itertools.chain(*[cut_antimeridian(geom)
-                                           for geom in obj.geometries]))
-            return GeometryCollection(parts, obj.crs)
-        elif isinstance(obj, Feature):
-            return Feature(cut_antimeridian(obj.geometry), obj.properties,
-                           obj.id, obj.crs)
-        elif isinstance(obj, FeatureCollection):
-            return FeatureCollection([cut_antimeridian(f) for f in obj.features],
-                                     obj.crs)
-    else:
-        return obj
+        else:
+            return obj
+    elif isinstance(obj, MultiLineString):
+        parts = [_split_coordinate_string(c) for c in obj.coordinates]
+        return MultiLineString(parts, obj.crs)
+    elif isinstance(obj, MultiPolygon):
+        parts = [[[_close_ring(p) for p in _split_coordinate_string(c)]
+                  for c in polycoords]
+                  for polycoords in obj.coordinates]
+        return MultiPolygon(parts, obj.crs)
+    elif isinstance(obj, GeometryCollection):
+        parts = list(itertools.chain(*[cut_antimeridian(geom)
+                                       for geom in obj.geometries]))
+        return GeometryCollection(parts, obj.crs)
+    elif isinstance(obj, Feature):
+        return Feature(cut_antimeridian(obj.geometry), obj.properties,
+                       obj.id, obj.crs)
+    elif isinstance(obj, FeatureCollection):
+        return FeatureCollection([cut_antimeridian(f) for f in obj.features],
+                                 obj.crs)

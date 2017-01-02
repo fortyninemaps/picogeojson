@@ -190,14 +190,15 @@ class SerializerTests(unittest.TestCase):
 
 class AntimerdianTests(unittest.TestCase):
 
-    def test_linestring_crosses(self):
-        self.assertTrue(pgj.antimeridian.crosses_antimeridian(
-                            pgj.LineString([(172, 34), (178, 36), (-179, 37), (-177, 39)])
-                        ))
+    def test_contains(self):
+        self.assertFalse(pgj.antimeridian.contains(
+            [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)],
+            [(2, 0), (2, 1), (3, 1), (3, 0), (2, 0)]))
 
-        self.assertFalse(pgj.antimeridian.crosses_antimeridian(
-                            pgj.LineString([(172, 34), (178, 36), (179, 37), (178, 39)])
-                        ))
+        self.assertTrue(pgj.antimeridian.contains(
+            [(0, 0), (0, 2), (2, 2), (2, 0), (0, 0)],
+            [(1, 1), (1, 3), (3, 3), (3, 1), (1, 1)]))
+        return
 
     def test_linestring_split(self):
         res = pgj.antimeridian.antimeridian_cut(
@@ -207,6 +208,23 @@ class AntimerdianTests(unittest.TestCase):
         self.assertEqual(len(res.coordinates), 2)
         self.assertEqual(res.coordinates[0][-1], (180, 36.33333333))
         self.assertEqual(res.coordinates[1][0], (-179.99999999, 36.33333333))
+
+    def test_polygon_split(self):
+        res = pgj.antimeridian.antimeridian_cut(
+                pgj.Polygon([[(172, -20), (-179, -20), (-177, -25), (172, -25), (172, -20)]])
+                )
+        self.assertTrue(isinstance(res, pgj.MultiPolygon))
+        self.assertEqual(len(res.coordinates), 2)
+
+    def test_polygon_split_holes(self):
+        res = pgj.antimeridian.antimeridian_cut(
+                pgj.Polygon([[(172, -20), (-179, -20), (-177, -25), (172, -25), (172, -20)],
+                             [(174, -22), (-179, -22), (-179, -23), (174, -22)]])
+                )
+        self.assertTrue(isinstance(res, pgj.MultiPolygon))
+        self.assertEqual(len(res.coordinates), 2)
+        self.assertEqual(len(res.coordinates[0]), 2)
+        self.assertEqual(len(res.coordinates[1]), 2)
 
 
 if __name__ == "__main__":
