@@ -226,6 +226,14 @@ class AntimerdianTests(unittest.TestCase):
         self.assertEqual(len(res.coordinates[0]), 2)
         self.assertEqual(len(res.coordinates[1]), 2)
 
+class OrientationTests(unittest.TestCase):
+
+    def test_isccw(self):
+        self.assertTrue(pgj.orientation.is_counterclockwise(
+            [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]))
+
+        self.assertFalse(pgj.orientation.is_counterclockwise(
+            [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]))
 
 if __name__ == "__main__":
     unittest.main()
