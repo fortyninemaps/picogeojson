@@ -6,3 +6,4 @@ from .types import (Point, LineString, Polygon,
 
 from .geojson import Serializer, Deserializer, DEFAULTCRS
 from . import antimeridian
+from . import orientation

@@ -115,6 +115,25 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(list(linestring.coordinates), list(d["coordinates"]))
         return
 
+    def test_serialize_polygon_reverse(self):
+        # serializer may be used to enforce the RFC7946 requirement for CCW
+        # external rings
+        #
+        # this test creates a backwards Polygon, and checks that the serializer
+        # roverses it when told to do so, but not otherwise
+        serializer = Serializer(enforce_poly_winding=True)
+        polygon = pgj.Polygon([[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]])
+        s = serializer(polygon)
+        d_ccw = json.loads(s)
+
+        serializer = Serializer(enforce_poly_winding=False)
+        polygon = pgj.Polygon([[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]])
+        s = serializer(polygon)
+        d_cc = json.loads(s)
+
+        self.assertEqual(d_ccw["coordinates"][0], d_cc["coordinates"][0][::-1])
+        return
+
     def test_serialize_polygon(self):
         polygon = pgj.Polygon([[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0], [44.0, 17.0]],
                                    [[1.0, 1.0], [0.5, -0.5], [0.8, -0.7], [1.0, 1.0]]],
@@ -145,8 +164,8 @@ class SerializerTests(unittest.TestCase):
 
     def test_serialize_multipolygon(self):
         multipolygon = pgj.MultiPolygon(
-                            [[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
-                              [[1.0, 1.0], [0.5, -0.5], [0.8, [-0.7]]],
+                            [[[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
+                              [[1.0, 1.0], [0.5, -0.5], [0.8, -0.7]]],
                              [[[49.0, -3.0], [48.0, -2.5], [2.9, -16.0]]]],
                             DEFAULTCRS)
         s = self.serializer(multipolygon)

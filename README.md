@@ -1,6 +1,6 @@
 # picogeojson
 
-Simple, fast, and straightforward GeoJSON parsing and serialization with zero
+Straightforward and compliant GeoJSON parsing and serialization with zero
 dependencies. Easily ingest or output GeoJSON adhering to the
 [spec](https://tools.ietf.org/html/rfc7946).
 

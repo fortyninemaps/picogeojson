@@ -22,6 +22,7 @@ from .types import (Point, LineString, Polygon,
                     GeometryCollection, Feature, FeatureCollection)
 
 from .antimeridian import antimeridian_cut
+from .orientation import is_counterclockwise
 
 DEFAULTCRS = {"type": "name",
               "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
@@ -159,9 +160,15 @@ class Serializer(object):
     *antimeridian_cutting* indicates whether geometries spanning the dateline
     should be split, possibly changing type in the process (e.g. LineString to
     MultiLineString)
+
+    *enforce_poly_winding* ensures that serialized Polygons and MultiPolygons
+    have counterclockwise external boundaries and clockwise internal boundaries
+    (holes)
     """
 
-    def __init__(self, antimeridian_cutting=True):
+    def __init__(self, antimeridian_cutting=True, enforce_poly_winding=True):
+        self.antimeridian_cutting = antimeridian_cutting
+        self.enforce_poly_winding = enforce_poly_winding
         return
 
     def __call__(self, geom, indent=None):
@@ -228,6 +235,19 @@ class Serializer(object):
             crs = geom.crs
         d = {"type": name,
              "coordinates": geom.coordinates}
+
+        if self.enforce_poly_winding:
+            if name == "Polygon":
+                cx = d["coordinates"]
+                for i, ring in enumerate(cx):
+                    if bool(i) is is_counterclockwise(ring):
+                        cx[i] = ring[::-1]
+            elif name == "MultiPolygon":
+                for j, cx in enumerate(d["coordinates"]):
+                    for i, ring in enumerate(cx):
+                        if bool(i) is is_counterclockwise(ring):
+                            cx[i] = ring[::-1]
+
         if crs is not None:
             d["crs"] = crs
         return d

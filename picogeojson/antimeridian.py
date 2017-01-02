@@ -140,13 +140,16 @@ def antimeridian_cut(obj):
         else:
             return obj
     elif isinstance(obj, MultiLineString):
-        parts = [_split_coordinate_string(c) for c in obj.coordinates]
+        parts = []
+        for ls in obj.coordinates:
+            if _crosses_antimeridian(ls):
+                parts.extend(_split_coordinate_string(ls))
+            else:
+                parts.append(ls)
         return MultiLineString(parts, obj.crs)
     elif isinstance(obj, MultiPolygon):
-        parts = [[[_close_ring(p) for p in _split_coordinate_string(c)]
-                  for c in polycoords]
-                  for polycoords in obj.coordinates]
-        return MultiPolygon(parts, obj.crs)
+        parts = [cut_antimeridian(Polygon(c)) for c in obj.coordinates]
+        return MultiPolygon([p.coordinates for p in parts], obj.crs)
     elif isinstance(obj, GeometryCollection):
         parts = list(itertools.chain(*[cut_antimeridian(geom)
                                        for geom in obj.geometries]))
