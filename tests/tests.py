@@ -20,34 +20,34 @@ class DeserializerTests(unittest.TestCase):
         return
 
     def test_point_read(self):
-        res = self.deserializer.read_json(os.path.join(TESTDATA, 'point.json'))
+        res = self.deserializer.fromfile(os.path.join(TESTDATA, 'point.json'))
         self.assertEqual(res.coordinates, [100.0, 0.0])
         return
 
     def test_linestring_read(self):
-        res = self.deserializer.read_json(os.path.join(TESTDATA, 'linestring.json'))
+        res = self.deserializer.fromfile(os.path.join(TESTDATA, 'linestring.json'))
         self.assertEqual(res.coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_polygon_read(self):
-        res = self.deserializer.read_json(os.path.join(TESTDATA, 'polygon.json'))
+        res = self.deserializer.fromfile(os.path.join(TESTDATA, 'polygon.json'))
         self.assertEqual(res.coordinates,
             [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
         return
 
     def test_multipoint_read(self):
-        res = self.deserializer.read_json(os.path.join(TESTDATA, 'multipoint.json'))
+        res = self.deserializer.fromfile(os.path.join(TESTDATA, 'multipoint.json'))
         self.assertEqual(res.coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_multilinestring_read(self):
-        res = self.deserializer.read_json(os.path.join(TESTDATA, 'multilinestring.json'))
+        res = self.deserializer.fromfile(os.path.join(TESTDATA, 'multilinestring.json'))
         self.assertEqual(res.coordinates, [[[100.0, 0.0], [101.0, 1.0]],
                                               [[102.0, 2.0], [103.0, 3.0]]])
         return
 
     def test_multipolygon_read(self):
-        res = self.deserializer.read_json(os.path.join(TESTDATA, 'multipolygon.json'))
+        res = self.deserializer.fromfile(os.path.join(TESTDATA, 'multipolygon.json'))
         self.assertEqual(res.coordinates,
             [[[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
              [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
@@ -55,29 +55,29 @@ class DeserializerTests(unittest.TestCase):
         return
 
     def test_geometrycollection_read(self):
-        res = self.deserializer.read_json(os.path.join(TESTDATA, 'geometrycollection.json'))
+        res = self.deserializer.fromfile(os.path.join(TESTDATA, 'geometrycollection.json'))
         self.assertEqual(len(res.geometries), 2)
         self.assertTrue(isinstance(res.geometries[0], pgj.Point))
         self.assertTrue(isinstance(res.geometries[1], pgj.LineString))
         return
 
     def test_featurecollection_read(self):
-        fc = self.deserializer.read_json(os.path.join(TESTDATA, 'featurecollection.json'))
+        fc = self.deserializer.fromfile(os.path.join(TESTDATA, 'featurecollection.json'))
         self.assertTrue(isinstance(fc.features[0].geometry, pgj.Point))
         self.assertEqual(fc.features[0].geometry.coordinates, [102.0, 0.5])
-        self.assertEqual(fc.features[0].properties["scalar"], {"prop0": "value0"})
+        self.assertEqual(fc.features[0].properties, {"prop0": "value0"})
 
         self.assertTrue(isinstance(fc.features[1].geometry, pgj.LineString))
         self.assertEqual(fc.features[1].geometry.coordinates,
                         [[102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]])
-        self.assertEqual(fc.features[1].properties["scalar"],
+        self.assertEqual(fc.features[1].properties,
                         {"prop0": "value0", "prop1": 0.0})
 
         self.assertTrue(isinstance(fc.features[2].geometry, pgj.Polygon))
         self.assertEqual(fc.features[2].geometry.coordinates,
                         [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
                           [100.0, 1.0], [100.0, 0.0]]])
-        self.assertEqual(fc.features[2].properties["scalar"],
+        self.assertEqual(fc.features[2].properties,
                         {"prop0": "value0", "prop1": {"this": "that"}})
         return
 

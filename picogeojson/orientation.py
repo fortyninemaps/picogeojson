@@ -18,5 +18,5 @@ def is_counterclockwise(ring):
             ymin = pt[1]
             xmin = pt[0]
 
-    return _isleft(incomplete_ring[i-1], incomplete_ring[i], incomplete_ring[i+1])
+    return _isleft(incomplete_ring[imin-1], incomplete_ring[imin], incomplete_ring[imin+1])
 

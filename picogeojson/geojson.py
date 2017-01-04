@@ -40,11 +40,9 @@ class NumpyAwareJSONEncoder(json.JSONEncoder):
 class Deserializer(object):
 
     def __init__(self, defaultcrs=DEFAULTCRS):
-        """ Create a reader-object for a GeoJSON-containing file or StreamIO
-        object. Use as::
-
-            with open(`fnm`, 'r') as f:
-                reader = GeoJSONReader(f)
+        """ Parses GeoJSON strings and returns namedtuples. Strings can be
+        passed by file using deserializer.fromfile() or by value using
+        deserializer.fromstring().
         """
         self.jsondict = {}
         self.defaultcrs = defaultcrs
@@ -52,15 +50,15 @@ class Deserializer(object):
 
     def __call__(self, f):
         try:
-            return self.load_json(f)
+            return self.fromstring(f)
         except ValueError:
-            return self.read_json(f)
+            return self.fromfile(f)
 
-    def load_json(self, s):
+    def fromstring(self, s):
         self.jsondict = json.loads(s)
         return self._deserialize()
 
-    def read_json(self, f):
+    def fromfile(self, f):
         if hasattr(f, 'read'):
             self.jsondict = json.load(f)
             return self.deserialize()
@@ -107,7 +105,7 @@ class Deserializer(object):
             n = 1
         else:
             n = len(geom.coordinates)
-        prop = self._parseProperties(o["properties"], n)
+        prop = o["properties"]
         fid = o.get("id", None)
         return Feature(geom, prop, fid, crs)
 
@@ -115,17 +113,6 @@ class Deserializer(object):
         crs = o.get("crs", self.defaultcrs)
         features = [self._parseFeature(f) for f in o["features"]]
         return FeatureCollection(features, crs)
-
-    @staticmethod
-    def _parseProperties(prop, geomlen):
-        d = {"scalar":{},
-             "vector":{}}
-        for key, value in prop.items():
-            if geomlen > 1 and hasattr(value, "__iter__") and len(value) == geomlen:
-                d["vector"][key] = value
-            else:
-                d["scalar"][key] = value
-        return d
 
     def deserialize(self, d=None):
         if d is None:
