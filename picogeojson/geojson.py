@@ -274,3 +274,14 @@ def asfixedlist(A):
     else:
         return round(A, 6)
 
+def fromfile(f, **kw):
+    d = Deserializer(**kw)
+    return d.fromfile(f)
+
+def fromstring(s, **kw):
+    d = Deserializer(**kw)
+    return d.fromstring(s)
+
+def tostring(geom, **kw):
+    s = Serializer(**kw)
+    return s(geom)
