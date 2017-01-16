@@ -141,6 +141,14 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(list(polygon.coordinates), list(d["coordinates"]))
         return
 
+    def test_serialize_polygon_antimeridian(self):
+        polygon = pgj.Polygon([[(172, -20), (-179, -20), (-177, -25),
+                                (172, -25), (172, -20)]])
+        s = self.serializer(polygon)
+        d = json.loads(s)
+        self.assertEqual(d["type"], "MultiPolygon")
+        return
+
     def test_serialize_multipoint(self):
         multipoint = pgj.MultiPoint([[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
                                         DEFAULTCRS)
@@ -203,6 +211,7 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(len(d.get("features", [])), 3)
         self.assertEqual(d.get("crs", ""), DEFAULTCRS)
         return
+
 
 class AntimerdianTests(unittest.TestCase):
 

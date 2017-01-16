@@ -2,14 +2,18 @@
 Overview
 --------
 
-`Deserializer` converts GeoJSON strings or files to named tuples.
+The functions
 
-`Serializer` validates and converts named tuples to GeoJSON strings.
+- `fromstring()` and `fromfile()` return namedtuples from GeoJSON input.
+- `tostring()` returns GeoJSON from a namedtuple.
+
+Likewise,
+
+- `Deserializer` converts GeoJSON strings or files to named tuples.
+- `Serializer` validates and converts named tuples to GeoJSON strings.
 """
 
 import json
-from functools import reduce
-
 from .types import (Point, LineString, Polygon,
                     MultiPoint, MultiLineString, MultiPolygon,
                     GeometryCollection, Feature, FeatureCollection)
@@ -56,7 +60,7 @@ class Deserializer(object):
 
     def fromstring(self, s):
         self.jsondict = json.loads(s)
-        return self._deserialize()
+        return self.deserialize()
 
     def fromfile(self, f):
         if hasattr(f, 'read'):
@@ -101,10 +105,6 @@ class Deserializer(object):
     def _parseFeature(self, o):
         crs = o.get("crs", self.defaultcrs)
         geom = self.deserialize(o["geometry"])
-        if isinstance(geom, GeometryCollection):
-            n = 1
-        else:
-            n = len(geom.coordinates)
         prop = o["properties"]
         fid = o.get("id", None)
         return Feature(geom, prop, fid, crs)
@@ -166,27 +166,14 @@ class Serializer(object):
                           cls=NumpyAwareJSONEncoder)
 
     def geometry_asdict(self, geom):
-
         if isinstance(geom, Feature):
             return self.feature_asdict(geom)
-        elif isinstance(geom, Point):
-            return self._geometry_asdict(geom, "Point")
-        elif isinstance(geom, LineString):
-            return self._geometry_asdict(geom, "LineString")
-        elif isinstance(geom, Polygon):
-            return self._geometry_asdict(geom, "Polygon")
-        elif isinstance(geom, MultiPoint):
-            return self._geometry_asdict(geom, "MultiPoint")
-        elif isinstance(geom, MultiLineString):
-            return self._geometry_asdict(geom, "MultiLineString")
-        elif isinstance(geom, MultiPolygon):
-            return self._geometry_asdict(geom, "MultiPolygon")
         elif isinstance(geom, GeometryCollection):
             return self.geometry_collection_asdict(geom)
         elif isinstance(geom, FeatureCollection):
             return self.feature_collection_asdict(geom)
         else:
-            raise TypeError("cannot serialize type '{0}'".format(type(geom)))
+            return self._geometry_asdict(geom)
 
     @staticmethod
     def crsdict(crs=None, urn=None, href="", linktype="proj4"):
@@ -218,21 +205,28 @@ class Serializer(object):
         else:
             return None
 
-    def _geometry_asdict(self, geom, name):
+    def _geometry_asdict(self, geom):
         if not isinstance(geom.crs, dict):
             crs = self.crsdict(geom.crs)
         else:
             crs = geom.crs
-        d = {"type": name,
+
+        if self.antimeridian_cutting:
+            if type(geom).__name__ in ("LineString", "Polygon", "MultiLineString",
+                                        "MultiPolygon", "GeometryCollection",
+                                        "Feature", "FeatureCollection"):
+                geom = antimeridian_cut(geom)
+
+        d = {"type": type(geom).__name__,
              "coordinates": geom.coordinates}
 
         if self.enforce_poly_winding:
-            if name == "Polygon":
+            if type(geom).__name__ == "Polygon":
                 cx = d["coordinates"]
                 for i, ring in enumerate(cx):
                     if bool(i) is is_counterclockwise(ring):
                         cx[i] = ring[::-1]
-            elif name == "MultiPolygon":
+            elif type(geom).__name__ == "MultiPolygon":
                 for j, cx in enumerate(d["coordinates"]):
                     for i, ring in enumerate(cx):
                         if bool(i) is is_counterclockwise(ring):

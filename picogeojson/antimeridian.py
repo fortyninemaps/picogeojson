@@ -102,7 +102,7 @@ def _crosses_antimeridian(coordinates):
     return False
 
 def antimeridian_cut(obj):
-    """ Given a multiple vertex GeoJSON object, *cut_antimeridian* splits the
+    """ Given a multiple vertex GeoJSON object, *antimeridian_cut* splits the
     object wherever it crosses the antimeridian. If a split occurs, the return
     type is according to:
 
@@ -151,15 +151,15 @@ def antimeridian_cut(obj):
                 parts.append(ls)
         return MultiLineString(parts, obj.crs)
     elif isinstance(obj, MultiPolygon):
-        parts = [cut_antimeridian(Polygon(c)) for c in obj.coordinates]
+        parts = [antimeridian_cut(Polygon(c)) for c in obj.coordinates]
         return MultiPolygon([p.coordinates for p in parts], obj.crs)
     elif isinstance(obj, GeometryCollection):
-        parts = list(itertools.chain(*[cut_antimeridian(geom)
+        parts = list(itertools.chain(*[antimeridian_cut(geom)
                                        for geom in obj.geometries]))
         return GeometryCollection(parts, obj.crs)
     elif isinstance(obj, Feature):
-        return Feature(cut_antimeridian(obj.geometry), obj.properties,
+        return Feature(antimeridian_cut(obj.geometry), obj.properties,
                        obj.id, obj.crs)
     elif isinstance(obj, FeatureCollection):
-        return FeatureCollection([cut_antimeridian(f) for f in obj.features],
+        return FeatureCollection([antimeridian_cut(f) for f in obj.features],
                                  obj.crs)
