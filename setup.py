@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
-from picogeojson import __version__ as version
+from picogeo import __version__ as version
 
 setup(
-        name="picogeojson",
+        name="picogeo",
         version=version,
         description="A minimal geojson serializer and deserializer",
         author="Nat Wilson",
