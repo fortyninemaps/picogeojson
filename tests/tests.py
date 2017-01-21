@@ -8,8 +8,8 @@ except ImportError:
     from io import StringIO
 import json
 
-import picogeo
-from picogeo import Serializer, Deserializer, DEFAULTCRS
+import picogeojson
+from picogeojson import Serializer, Deserializer, DEFAULTCRS
 
 TESTDATA = "tests/"
 
@@ -20,7 +20,7 @@ class DeserializerTests(unittest.TestCase):
         return
 
     def test_shorthand(self):
-        res = picogeo.fromfile(os.path.join(TESTDATA, 'point.json'))
+        res = picogeojson.fromfile(os.path.join(TESTDATA, 'point.json'))
         self.assertEqual(res.coordinates, [100.0, 0.0])
         return
 
@@ -62,23 +62,23 @@ class DeserializerTests(unittest.TestCase):
     def test_geometrycollection_read(self):
         res = self.deserializer.fromfile(os.path.join(TESTDATA, 'geometrycollection.json'))
         self.assertEqual(len(res.geometries), 2)
-        self.assertTrue(isinstance(res.geometries[0], picogeo.Point))
-        self.assertTrue(isinstance(res.geometries[1], picogeo.LineString))
+        self.assertTrue(isinstance(res.geometries[0], picogeojson.Point))
+        self.assertTrue(isinstance(res.geometries[1], picogeojson.LineString))
         return
 
     def test_featurecollection_read(self):
         fc = self.deserializer.fromfile(os.path.join(TESTDATA, 'featurecollection.json'))
-        self.assertTrue(isinstance(fc.features[0].geometry, picogeo.Point))
+        self.assertTrue(isinstance(fc.features[0].geometry, picogeojson.Point))
         self.assertEqual(fc.features[0].geometry.coordinates, [102.0, 0.5])
         self.assertEqual(fc.features[0].properties, {"prop0": "value0"})
 
-        self.assertTrue(isinstance(fc.features[1].geometry, picogeo.LineString))
+        self.assertTrue(isinstance(fc.features[1].geometry, picogeojson.LineString))
         self.assertEqual(fc.features[1].geometry.coordinates,
                         [[102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]])
         self.assertEqual(fc.features[1].properties,
                         {"prop0": "value0", "prop1": 0.0})
 
-        self.assertTrue(isinstance(fc.features[2].geometry, picogeo.Polygon))
+        self.assertTrue(isinstance(fc.features[2].geometry, picogeojson.Polygon))
         self.assertEqual(fc.features[2].geometry.coordinates,
                         [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
                           [100.0, 1.0], [100.0, 0.0]]])
@@ -93,19 +93,19 @@ class SerializerTests(unittest.TestCase):
         return
 
     def test_shorthand(self):
-        pt = picogeo.Point((44.0, 17.0), DEFAULTCRS)
-        d = json.loads(picogeo.tostring(pt))
+        pt = picogeojson.Point((44.0, 17.0), DEFAULTCRS)
+        d = json.loads(picogeojson.tostring(pt))
         self.assertEqual(tuple(pt.coordinates), tuple(d["coordinates"]))
 
     def test_serialize_point(self):
-        pt = picogeo.Point((44.0, 17.0), DEFAULTCRS)
+        pt = picogeojson.Point((44.0, 17.0), DEFAULTCRS)
         s = self.serializer(pt)
         d = json.loads(s)
         self.assertEqual(tuple(pt.coordinates), tuple(d["coordinates"]))
         return
 
     def test_serialize_linestring(self):
-        linestring = picogeo.LineString([[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
+        linestring = picogeojson.LineString([[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
                                         DEFAULTCRS)
         s = self.serializer(linestring)
         d = json.loads(s)
@@ -119,12 +119,12 @@ class SerializerTests(unittest.TestCase):
         # this test creates a backwards Polygon, and checks that the serializer
         # roverses it when told to do so, but not otherwise
         serializer = Serializer(enforce_poly_winding=True)
-        polygon = picogeo.Polygon([[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]])
+        polygon = picogeojson.Polygon([[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]])
         s = serializer(polygon)
         d_ccw = json.loads(s)
 
         serializer = Serializer(enforce_poly_winding=False)
-        polygon = picogeo.Polygon([[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]])
+        polygon = picogeojson.Polygon([[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]])
         s = serializer(polygon)
         d_cc = json.loads(s)
 
@@ -132,7 +132,7 @@ class SerializerTests(unittest.TestCase):
         return
 
     def test_serialize_polygon(self):
-        polygon = picogeo.Polygon([[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0], [44.0, 17.0]],
+        polygon = picogeojson.Polygon([[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0], [44.0, 17.0]],
                                    [[1.0, 1.0], [0.5, -0.5], [0.8, -0.7], [1.0, 1.0]]],
                                   DEFAULTCRS)
         s = self.serializer(polygon)
@@ -142,7 +142,7 @@ class SerializerTests(unittest.TestCase):
         return
 
     def test_serialize_polygon_antimeridian(self):
-        polygon = picogeo.Polygon([[(172, -20), (-179, -20), (-177, -25),
+        polygon = picogeojson.Polygon([[(172, -20), (-179, -20), (-177, -25),
                                 (172, -25), (172, -20)]])
         s = self.serializer(polygon)
         d = json.loads(s)
@@ -150,7 +150,7 @@ class SerializerTests(unittest.TestCase):
         return
 
     def test_serialize_multipoint(self):
-        multipoint = picogeo.MultiPoint([[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
+        multipoint = picogeojson.MultiPoint([[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
                                         DEFAULTCRS)
         s = self.serializer(multipoint)
         d = json.loads(s)
@@ -158,7 +158,7 @@ class SerializerTests(unittest.TestCase):
         return
 
     def test_serialize_multilinestring(self):
-        multilinestring = picogeo.MultiLineString(
+        multilinestring = picogeojson.MultiLineString(
                             [[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
                              [[49.0, -3.0], [48.0, -2.5], [2.9, -16.0]]],
                             DEFAULTCRS)
@@ -168,7 +168,7 @@ class SerializerTests(unittest.TestCase):
         return
 
     def test_serialize_multipolygon(self):
-        multipolygon = picogeo.MultiPolygon(
+        multipolygon = picogeojson.MultiPolygon(
                             [[[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
                               [[1.0, 1.0], [0.5, -0.5], [0.8, -0.7]]],
                              [[[49.0, -3.0], [48.0, -2.5], [2.9, -16.0]]]],
@@ -179,9 +179,9 @@ class SerializerTests(unittest.TestCase):
         return
 
     def test_serialize_geometrycollection(self):
-        collection = picogeo.GeometryCollection([picogeo.Point((3, 4), None),
-                                             picogeo.Point((5, 6), None),
-                                             picogeo.LineString([(1, 2), (3, 4), (3, 2)], None)],
+        collection = picogeojson.GeometryCollection([picogeojson.Point((3, 4), None),
+                                             picogeojson.Point((5, 6), None),
+                                             picogeojson.LineString([(1, 2), (3, 4), (3, 2)], None)],
                                             DEFAULTCRS)
         s = self.serializer(collection)
         d = json.loads(s)
@@ -190,7 +190,7 @@ class SerializerTests(unittest.TestCase):
         return
 
     def test_serialize_feature(self):
-        feature = picogeo.Feature(picogeo.Point((1,2), None), {"type": "city"}, 1, DEFAULTCRS)
+        feature = picogeojson.Feature(picogeojson.Point((1,2), None), {"type": "city"}, 1, DEFAULTCRS)
         s = self.serializer(feature)
         d = json.loads(s)
         self.assertEqual(d.get("geometry", {}).get("type", ""), "Point")
@@ -199,11 +199,11 @@ class SerializerTests(unittest.TestCase):
         return
 
     def test_serialize_featurecollection(self):
-        collection = picogeo.FeatureCollection(
-                [picogeo.Feature(picogeo.Point((7,3), None), {"type": "city"}, None, None),
-                 picogeo.Feature(picogeo.LineString([(1,2), (1,3), (2, 2)], None),
+        collection = picogeojson.FeatureCollection(
+                [picogeojson.Feature(picogeojson.Point((7,3), None), {"type": "city"}, None, None),
+                 picogeojson.Feature(picogeojson.LineString([(1,2), (1,3), (2, 2)], None),
                              {"type": "river"}, None, None),
-                 picogeo.Feature(picogeo.Polygon([[(1,2), (1,3), (2, 2), (2, 1)]], None),
+                 picogeojson.Feature(picogeojson.Polygon([[(1,2), (1,3), (2, 2), (2, 1)]], None),
                              {"type": "boundary"}, None, None)],
                 DEFAULTCRS)
         s = self.serializer(collection)
@@ -216,37 +216,37 @@ class SerializerTests(unittest.TestCase):
 class AntimerdianTests(unittest.TestCase):
 
     def test_contains(self):
-        self.assertFalse(picogeo.antimeridian.contains(
+        self.assertFalse(picogeojson.antimeridian.contains(
             [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)],
             [(2, 0), (2, 1), (3, 1), (3, 0), (2, 0)]))
 
-        self.assertTrue(picogeo.antimeridian.contains(
+        self.assertTrue(picogeojson.antimeridian.contains(
             [(0, 0), (0, 2), (2, 2), (2, 0), (0, 0)],
             [(1, 1), (1, 3), (3, 3), (3, 1), (1, 1)]))
         return
 
     def test_linestring_split(self):
-        res = picogeo.antimeridian.antimeridian_cut(
-                picogeo.LineString([(172, 34), (178, 36), (-179, 37), (-177, 39)])
+        res = picogeojson.antimeridian.antimeridian_cut(
+                picogeojson.LineString([(172, 34), (178, 36), (-179, 37), (-177, 39)])
                 )
-        self.assertTrue(isinstance(res, picogeo.MultiLineString))
+        self.assertTrue(isinstance(res, picogeojson.MultiLineString))
         self.assertEqual(len(res.coordinates), 2)
         self.assertEqual(res.coordinates[0][-1], (180, 36.33333333))
         self.assertEqual(res.coordinates[1][0], (-179.99999999, 36.33333333))
 
     def test_polygon_split(self):
-        res = picogeo.antimeridian.antimeridian_cut(
-                picogeo.Polygon([[(172, -20), (-179, -20), (-177, -25), (172, -25), (172, -20)]])
+        res = picogeojson.antimeridian.antimeridian_cut(
+                picogeojson.Polygon([[(172, -20), (-179, -20), (-177, -25), (172, -25), (172, -20)]])
                 )
-        self.assertTrue(isinstance(res, picogeo.MultiPolygon))
+        self.assertTrue(isinstance(res, picogeojson.MultiPolygon))
         self.assertEqual(len(res.coordinates), 2)
 
     def test_polygon_split_holes(self):
-        res = picogeo.antimeridian.antimeridian_cut(
-                picogeo.Polygon([[(172, -20), (-179, -20), (-177, -25), (172, -25), (172, -20)],
+        res = picogeojson.antimeridian.antimeridian_cut(
+                picogeojson.Polygon([[(172, -20), (-179, -20), (-177, -25), (172, -25), (172, -20)],
                              [(174, -22), (-179, -22), (-179, -23), (174, -22)]])
                 )
-        self.assertTrue(isinstance(res, picogeo.MultiPolygon))
+        self.assertTrue(isinstance(res, picogeojson.MultiPolygon))
         self.assertEqual(len(res.coordinates), 2)
         self.assertEqual(len(res.coordinates[0]), 2)
         self.assertEqual(len(res.coordinates[1]), 2)
@@ -254,10 +254,10 @@ class AntimerdianTests(unittest.TestCase):
 class OrientationTests(unittest.TestCase):
 
     def test_isccw(self):
-        self.assertTrue(picogeo.orientation.is_counterclockwise(
+        self.assertTrue(picogeojson.orientation.is_counterclockwise(
             [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]))
 
-        self.assertFalse(picogeo.orientation.is_counterclockwise(
+        self.assertFalse(picogeojson.orientation.is_counterclockwise(
             [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]))
 
 if __name__ == "__main__":

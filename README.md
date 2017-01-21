@@ -1,4 +1,4 @@
-# picogeo
+# picogeojson
 
 [![Build Status](https://travis-ci.org/fortyninemaps/picogeojson.svg?branch=master)](https://travis-ci.org/fortyninemaps/picogeojson)
 
@@ -12,15 +12,15 @@ GeoJSON strings or files are read using the `fromstring()` and `fromfile()`
 functions.
 
 ```python
-result = picogeo(fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}'))
+result = picogeojson(fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}'))
 # -> Point(coordinates=[1.0, 3.0])
 ```
 
 GeoJSON objects are constructed in Python using namedtuples with `tostring()`.
 
 ```python
-picogeo.tostring(
-    picogeo.Point([1.0, 3.0])
+picogeojson.tostring(
+    picogeojson.Point([1.0, 3.0])
 )
 # -> {"coordinates": [1.0, 3.0], "type": "Point"}'
 ```
