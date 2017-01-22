@@ -10,5 +10,6 @@ python:
 install:
   - "pip install ."
   - "pip install coverage coveralls"
+  - "rm -rf picogeojson"
 script: "coverage run --source=picogeojson tests/tests.py && coverage report"
 after_success: "coveralls"
