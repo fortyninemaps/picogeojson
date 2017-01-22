@@ -2,15 +2,12 @@
 
 import unittest
 import os
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 import json
 
 import picogeojson
 from picogeojson import Serializer, Deserializer, DEFAULTCRS
 import picogeojson.bbox as bbox
+from picogeojson.geojson import fixed_precision
 
 TESTDATA = "tests/"
 
@@ -49,7 +46,7 @@ class DeserializerTests(unittest.TestCase):
     def test_multilinestring_read(self):
         res = self.deserializer.fromfile(os.path.join(TESTDATA, 'multilinestring.json'))
         self.assertEqual(res.coordinates, [[[100.0, 0.0], [101.0, 1.0]],
-                                              [[102.0, 2.0], [103.0, 3.0]]])
+                                           [[102.0, 2.0], [103.0, 3.0]]])
         return
 
     def test_multipolygon_read(self):
@@ -66,6 +63,14 @@ class DeserializerTests(unittest.TestCase):
         self.assertTrue(isinstance(res.geometries[0], picogeojson.Point))
         self.assertTrue(isinstance(res.geometries[1], picogeojson.LineString))
         return
+
+    def test_feature_read(self):
+        fc = self.deserializer.fromfile(os.path.join(TESTDATA, 'feature.json'))
+        self.assertEqual(fc.id, 0)
+        self.assertEqual(fc.geometry.coordinates,
+            [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
+        self.assertEqual(type(fc.geometry).__name__, "Polygon")
+        self.assertEqual(fc.properties["name"], "Strathcona")
 
     def test_featurecollection_read(self):
         fc = self.deserializer.fromfile(os.path.join(TESTDATA, 'featurecollection.json'))
@@ -318,6 +323,18 @@ class BboxTests(unittest.TestCase):
         bbx = bbox.feature_bbox(feature)
         self.assertEqual(bbx, [1, 2, 0, 2, 3, 1])
 
+class FixedPrecisionTests(unittest.TestCase):
+
+    def test_scalar(self):
+        self.assertEqual(fixed_precision(3.141592654, 3), 3.142)
+
+    def test_list(self):
+        self.assertEqual(fixed_precision([1.234567, 2.345678, 3.456789], 3),
+                                         [1.235, 2.346, 3.457])
+
+    def test_nested_list(self):
+        self.assertEqual(fixed_precision([[1.234567, 2.345678], 3.456789], 3),
+                                         [[1.235, 2.346], 3.457])
 
 if __name__ == "__main__":
     unittest.main()

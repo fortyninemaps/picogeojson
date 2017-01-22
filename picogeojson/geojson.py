@@ -278,13 +278,13 @@ class Serializer(object):
             d["crs"] = coll.crs
         return d
 
-def asfixedlist(A):
+def fixed_precision(A, prec=6):
     """ Recursively convert nested iterables or coordinates to nested lists at
     fixed precision. """
     if hasattr(A, '__iter__'):
-        return [asfixedlist(el) for el in A]
+        return [fixed_precision(el, prec=prec) for el in A]
     else:
-        return round(A, 6)
+        return round(A, prec)
 
 def fromfile(f, **kw):
     d = Deserializer(**kw)

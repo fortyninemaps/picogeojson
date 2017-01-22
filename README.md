@@ -1,6 +1,7 @@
 # picogeojson
 
 [![Build Status](https://travis-ci.org/fortyninemaps/picogeojson.svg?branch=master)](https://travis-ci.org/fortyninemaps/picogeojson)
+[![Coverage Status](https://coveralls.io/repos/github/fortyninemaps/picogeojson/badge.svg?branch=master)](https://coveralls.io/github/fortyninemaps/picogeojson?branch=master)
 
 Straightforward and compliant GeoJSON parsing and serialization with zero
 dependencies. Easily ingest or output GeoJSON adhering to the
@@ -16,7 +17,7 @@ result = picogeojson(fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}'))
 # -> Point(coordinates=[1.0, 3.0])
 ```
 
-GeoJSON objects are constructed in Python using namedtuples with `tostring()`.
+GeoJSON objects are constructed in Python and serialized with `tostring()`.
 
 ```python
 picogeojson.tostring(
@@ -27,12 +28,12 @@ picogeojson.tostring(
 
 Keyword arguments can be passed to `tostring()` that
 - enforce Polygon/MultiPolygon rotation direction, with counterclockwise for
-  enternal rings and clockwise for internal rings
+  external rings and clockwise for internal rings
 - split objects that cross the international dateline into multipart objects,
   for easier processing
+- alter
 
-For finer control, `Deserializer` and `Serializer` objects can be subclassed and
-overloaded.
+`Deserializer` and `Serializer` objects are provided for customization.
 
 This is a standalone Python package extracted from the
 [Karta](https://karta.fortyninemaps.com) `geojson` submodule.
