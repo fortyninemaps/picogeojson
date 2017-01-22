@@ -10,6 +10,7 @@ import json
 
 import picogeojson
 from picogeojson import Serializer, Deserializer, DEFAULTCRS
+import picogeojson.bbox as bbox
 
 TESTDATA = "tests/"
 
@@ -133,8 +134,8 @@ class SerializerTests(unittest.TestCase):
 
     def test_serialize_polygon(self):
         polygon = picogeojson.Polygon([[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0], [44.0, 17.0]],
-                                   [[1.0, 1.0], [0.5, -0.5], [0.8, -0.7], [1.0, 1.0]]],
-                                  DEFAULTCRS)
+                                       [[1.0, 1.0], [0.5, -0.5], [0.8, -0.7], [1.0, 1.0]]],
+                                      DEFAULTCRS)
         s = self.serializer(polygon)
         d = json.loads(s)
 
@@ -179,10 +180,11 @@ class SerializerTests(unittest.TestCase):
         return
 
     def test_serialize_geometrycollection(self):
-        collection = picogeojson.GeometryCollection([picogeojson.Point((3, 4), None),
-                                             picogeojson.Point((5, 6), None),
-                                             picogeojson.LineString([(1, 2), (3, 4), (3, 2)], None)],
-                                            DEFAULTCRS)
+        collection = picogeojson.GeometryCollection(
+                            [picogeojson.Point((3, 4), None),
+                             picogeojson.Point((5, 6), None),
+                             picogeojson.LineString([(1, 2), (3, 4), (3, 2)], None)],
+                            DEFAULTCRS)
         s = self.serializer(collection)
         d = json.loads(s)
         self.assertEqual(len(d.get("geometries", [])), 3)
@@ -259,6 +261,63 @@ class OrientationTests(unittest.TestCase):
 
         self.assertFalse(picogeojson.orientation.is_counterclockwise(
             [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]))
+
+class BboxTests(unittest.TestCase):
+
+    def test_coordinate_bbox_2d(self):
+        cs = [[i, j] for i in range(0, 30, 3) for j in range(10, -10, -2)]
+        bbx = bbox.coordstring_bbox(cs)
+        self.assertEqual(bbx, [0, -8, 27, 10])
+
+    def test_coordinate_bbox_3d(self):
+        cs = [[i, j, k] for i in range(0, 30, 3)
+                        for j in range(10, -10, -2)
+                        for k in range(1, 5)]
+        bbx = bbox.coordstring_bbox(cs)
+        self.assertEqual(bbx, [0, -8, 1, 27, 10, 4])
+
+    def test_point_bbox_2(self):
+        p = picogeojson.Point((2, 3))
+        bbx = bbox.geom_bbox(p)
+        self.assertEqual(bbx, [2, 3, 2, 3])
+
+    def test_point_bbox_3(self):
+        p = picogeojson.Point((2, 3, 1))
+        bbx = bbox.geom_bbox(p)
+        self.assertEqual(bbx, [2, 3, 1, 2, 3, 1])
+
+    def test_geometry_collection_bbox_2(self):
+        collection = picogeojson.GeometryCollection(
+                            [picogeojson.Point((3, 4), None),
+                             picogeojson.Point((5, 6), None),
+                             picogeojson.LineString([(1, 2), (3, 4), (3, 2)], None)],
+                            DEFAULTCRS)
+        bbx = bbox.geom_bbox(collection)
+        self.assertEqual(bbx, [1, 2, 5, 6])
+
+    def test_geometry_collection_bbox_3(self):
+        collection = picogeojson.GeometryCollection(
+                            [picogeojson.Point((3, 4, 1), None),
+                             picogeojson.Point((5, 6, 2), None),
+                             picogeojson.LineString([(1, 2, 2), (3, 4, 5), (3, 2, 3)], None)],
+                            DEFAULTCRS)
+        bbx = bbox.geom_bbox(collection)
+        self.assertEqual(bbx, [1, 2, 1, 5, 6, 5])
+
+    def test_feature_bbox_2(self):
+        feature = picogeojson.Feature(
+                    picogeojson.LineString([(1,2), (1,3), (2, 2)], None),
+                    {"type": "river"}, None, None)
+        bbx = bbox.feature_bbox(feature)
+        self.assertEqual(bbx, [1, 2, 2, 3])
+
+    def test_feature_bbox_3(self):
+        feature = picogeojson.Feature(
+                    picogeojson.LineString([(1, 2, 1), (1, 3, 0.5), (2, 2, 0)], None),
+                    {"type": "river"}, None, None)
+        bbx = bbox.feature_bbox(feature)
+        self.assertEqual(bbx, [1, 2, 0, 2, 3, 1])
+
 
 if __name__ == "__main__":
     unittest.main()

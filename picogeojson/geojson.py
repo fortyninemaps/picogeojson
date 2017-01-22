@@ -20,6 +20,7 @@ from .types import (Point, LineString, Polygon,
 
 from .antimeridian import antimeridian_cut
 from .orientation import is_counterclockwise
+from .bbox import geom_bbox, geometry_collection_bbox, feature_bbox, feature_collection_bbox
 
 DEFAULTCRS = {"type": "name",
               "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
@@ -154,11 +155,14 @@ class Serializer(object):
     *enforce_poly_winding* ensures that serialized Polygons and MultiPolygons
     have counterclockwise external boundaries and clockwise internal boundaries
     (holes)
+
+    *write_bbox* causes geometries and features to have a `bbox` member
     """
 
-    def __init__(self, antimeridian_cutting=True, enforce_poly_winding=True):
+    def __init__(self, antimeridian_cutting=True, enforce_poly_winding=True, write_bbox=True):
         self.antimeridian_cutting = antimeridian_cutting
         self.enforce_poly_winding = enforce_poly_winding
+        self.write_bbox = write_bbox
         return
 
     def __call__(self, geom, indent=None):
@@ -232,6 +236,9 @@ class Serializer(object):
                         if bool(i) is is_counterclockwise(ring):
                             cx[i] = ring[::-1]
 
+        if self.write_bbox:
+            d["bbox"] = geom_bbox(geom)
+
         if crs is not None:
             d["crs"] = crs
         return d
@@ -244,20 +251,31 @@ class Serializer(object):
             d["id"] = feature.id
         if feature.crs is not None:
             d["crs"] = feature.crs
+
+        if self.write_bbox:
+            d["bbox"] = feature_bbox(feature)
         return d
 
-    def geometry_collection_asdict(self, gcollection):
+    def geometry_collection_asdict(self, coll):
         d = {"type": "GeometryCollection",
-             "geometries": [self.geometry_asdict(g) for g in gcollection.geometries]}
-        if gcollection.crs is not None:
-            d["crs"] = gcollection.crs
+             "geometries": [self.geometry_asdict(g) for g in coll.geometries]}
+
+        if self.write_bbox:
+            d["bbox"] = geometry_collection_bbox(coll)
+
+        if coll.crs is not None:
+            d["crs"] = coll.crs
         return d
 
-    def feature_collection_asdict(self, fcollection):
+    def feature_collection_asdict(self, coll):
         d = {"type": "FeatureCollection",
-             "features": [self.feature_asdict(f) for f in fcollection.features]}
-        if fcollection.crs is not None:
-            d["crs"] = fcollection.crs
+             "features": [self.feature_asdict(f) for f in coll.features]}
+
+        if self.write_bbox:
+            d["bbox"] = feature_collection_bbox(coll)
+
+        if coll.crs is not None:
+            d["crs"] = coll.crs
         return d
 
 def asfixedlist(A):
