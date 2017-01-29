@@ -1,5 +1,9 @@
+import os.path
 from setuptools import setup, find_packages
-from picogeojson import __version__ as version
+
+path = os.path.split(__file__)[0]
+with open(os.path.join(path, "picogeojson/__init__.py")) as f:
+    version = f.readline().split("=")[1].strip()
 
 setup(
         name="picogeojson",
