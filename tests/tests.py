@@ -219,6 +219,34 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(d.get("crs", ""), DEFAULTCRS)
         return
 
+    def test_dedup_crs_geometry_collection(self):
+        crs = {"type": "name", "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
+        collection = picogeojson.GeometryCollection(
+                [picogeojson.Point((1, 2), crs=crs)],
+                crs=crs)
+        s = self.serializer(collection)
+        self.assertEqual(s.count('"crs"'), 1)
+
+    def test_dedup_crs_feature(self):
+        crs = {"type": "name", "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
+        feature = picogeojson.Feature(picogeojson.Point((1, 2), crs=crs),
+                                      {"type": "tree"}, id=1, crs=crs)
+        s = self.serializer(feature)
+        self.assertEqual(s.count('"crs"'), 1)
+
+    def test_dedup_crs_feature_collection(self):
+        crs = {"type": "name", "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
+        coll = picogeojson.FeatureCollection(
+                    [picogeojson.Feature(picogeojson.Point((1, 2), crs=crs),
+                                         {"type": "tree"}, id=1, crs=crs),
+                     picogeojson.Feature(picogeojson.LineString([(1, 2), (2, 3)], crs=crs),
+                                         {"type": "fence"}, id=2, crs=crs),
+                     picogeojson.Feature(picogeojson.Point((5, 4), crs=crs),
+                                         {"type": "pothole"}, id=3, crs=crs)],
+                    crs=crs)
+        s = self.serializer(coll)
+        self.assertEqual(s.count('"crs"'), 1)
+
 
 class AntimerdianTests(unittest.TestCase):
 

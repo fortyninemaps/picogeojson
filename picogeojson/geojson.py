@@ -166,18 +166,18 @@ class Serializer(object):
         return
 
     def __call__(self, geom, indent=None):
-        return json.dumps(self.geometry_asdict(geom), indent=indent,
+        return json.dumps(self.geojson_asdict(geom), indent=indent,
                           cls=NumpyAwareJSONEncoder)
 
-    def geometry_asdict(self, geom):
+    def geojson_asdict(self, geom, parent_crs=None):
         if isinstance(geom, Feature):
-            return self.feature_asdict(geom)
+            return self.feature_asdict(geom, parent_crs=parent_crs)
         elif isinstance(geom, GeometryCollection):
             return self.geometry_collection_asdict(geom)
         elif isinstance(geom, FeatureCollection):
             return self.feature_collection_asdict(geom)
         else:
-            return self._geometry_asdict(geom)
+            return self._geometry_asdict(geom, parent_crs=parent_crs)
 
     @staticmethod
     def crsdict(crs=None, urn=None, href="", linktype="proj4"):
@@ -209,11 +209,13 @@ class Serializer(object):
         else:
             return None
 
-    def _geometry_asdict(self, geom):
-        if not isinstance(geom.crs, dict):
-            crs = self.crsdict(geom.crs)
-        else:
+    def _geometry_asdict(self, geom, parent_crs=None):
+        if geom.crs is not None and geom.crs == parent_crs:
+            crs = None
+        elif geom.crs is None or isinstance(geom.crs, dict):
             crs = geom.crs
+        else:
+            crs = self.crsdict(geom.crs)
 
         if self.antimeridian_cutting:
             if type(geom).__name__ in ("LineString", "Polygon", "MultiLineString",
@@ -243,13 +245,13 @@ class Serializer(object):
             d["crs"] = crs
         return d
 
-    def feature_asdict(self, feature):
+    def feature_asdict(self, feature, parent_crs=None):
         d = {"type": "Feature",
-             "geometry": self.geometry_asdict(feature.geometry),
+             "geometry": self.geojson_asdict(feature.geometry, parent_crs=feature.crs),
              "properties": feature.properties}
         if feature.id is not None:
             d["id"] = feature.id
-        if feature.crs is not None:
+        if feature.crs is not None and feature.crs != parent_crs:
             d["crs"] = feature.crs
 
         if self.write_bbox:
@@ -258,7 +260,8 @@ class Serializer(object):
 
     def geometry_collection_asdict(self, coll):
         d = {"type": "GeometryCollection",
-             "geometries": [self.geometry_asdict(g) for g in coll.geometries]}
+             "geometries": [self.geojson_asdict(g, parent_crs=coll.crs)
+                            for g in coll.geometries]}
 
         if self.write_bbox:
             d["bbox"] = geometry_collection_bbox(coll)
@@ -269,7 +272,8 @@ class Serializer(object):
 
     def feature_collection_asdict(self, coll):
         d = {"type": "FeatureCollection",
-             "features": [self.feature_asdict(f) for f in coll.features]}
+             "features": [self.feature_asdict(f, parent_crs=coll.crs)
+                          for f in coll.features]}
 
         if self.write_bbox:
             d["bbox"] = feature_collection_bbox(coll)
