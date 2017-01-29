@@ -7,6 +7,7 @@ setup(
         author="Nat Wilson",
         author_email="natw@fortyninemaps.com",
         license="MIT",
+        install_requires = ["attrs>=16.3.0"],
         classifiers=[
             'Development Status :: 4 - Beta',
 

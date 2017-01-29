@@ -1,30 +1,49 @@
-from collections import namedtuple
+import attr
 
-Point = namedtuple('Point', ['coordinates', 'crs'])
-Point.__new__.__defaults__ = (None,)
+@attr.s(cmp=False, slots=True)
+class Point(object):
+    coordinates = attr.ib()
+    crs = attr.ib(default=None)
 
-MultiPoint = namedtuple('MultiPoint', ['coordinates', 'crs'])
-MultiPoint.__new__.__defaults__ = (None,)
+@attr.s(cmp=False, slots=True)
+class MultiPoint(object):
+    coordinates = attr.ib()
+    crs = attr.ib(default=None)
 
-LineString = namedtuple('LineString', ['coordinates', 'crs'])
-LineString.__new__.__defaults__ = (None,)
+@attr.s(cmp=False, slots=True)
+class LineString(object):
+    coordinates = attr.ib()
+    crs = attr.ib(default=None)
 
-MultiLineString = namedtuple('MultiLineString', ['coordinates', 'crs'])
-MultiLineString.__new__.__defaults__ = (None,)
+@attr.s(cmp=False, slots=True)
+class MultiLineString(object):
+    coordinates = attr.ib()
+    crs = attr.ib(default=None)
 
-Polygon = namedtuple('Polygon', ['coordinates', 'crs'])
-Polygon.__new__.__defaults__ = (None,)
+@attr.s(cmp=False, slots=True)
+class Polygon(object):
+    coordinates = attr.ib()
+    crs = attr.ib(default=None)
 
-MultiPolygon = namedtuple('MultiPolygon', ['coordinates', 'crs'])
-MultiPolygon.__new__.__defaults__ = (None,)
+@attr.s(cmp=False, slots=True)
+class MultiPolygon(object):
+    coordinates = attr.ib()
+    crs = attr.ib(default=None)
 
-GeometryCollection = namedtuple('GeometryCollection', ['geometries', 'crs'])
-GeometryCollection.__new__.__defaults__ = (None,)
+@attr.s(cmp=False, slots=True)
+class GeometryCollection(object):
+    geometries = attr.ib()
+    crs = attr.ib(default=None)
 
-Feature = namedtuple('Feature', ['geometry', 'properties', 'id', 'crs'])
-Feature.__new__.__defaults__ = (None, None)
+@attr.s(cmp=False, slots=True)
+class Feature(object):
+    geometry = attr.ib()
+    properties = attr.ib()
+    id = attr.ib(default=None)
+    crs = attr.ib(default=None)
 
-FeatureCollection = namedtuple('FeatureCollection', ['features', 'crs'])
-FeatureCollection.__new__.__defaults__ = (None,)
-
+@attr.s(cmp=False, slots=True)
+class FeatureCollection(object):
+    features = attr.ib()
+    crs = attr.ib(default=None)
 
