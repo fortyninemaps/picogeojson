@@ -364,5 +364,52 @@ class FixedPrecisionTests(unittest.TestCase):
         self.assertEqual(fixed_precision([[1.234567, 2.345678], 3.456789], 3),
                                          [[1.235, 2.346], 3.457])
 
+class MergeTests(unittest.TestCase):
+
+    def test_merge_points(self):
+        pts = [picogeojson.Point((1, 2)),
+               picogeojson.Point((3, 4)),
+               picogeojson.Point((5, 6)),
+               picogeojson.Point((7, 8))]
+        merged = picogeojson.merge(pts)
+        self.assertEqual(type(merged).__name__, "MultiPoint")
+        self.assertEqual(len(merged.coordinates), 4)
+
+    def test_merge_linestrings(self):
+        lns = [picogeojson.LineString([(1, 2), (2, 2), (1, 1), (-1, 2)]),
+               picogeojson.LineString([(3, 4), (3, 4), (3, 2), (-3, 4)]),
+               picogeojson.LineString([(5, 6), (4, 6), (5, 3), (-5, 6)]),
+               picogeojson.LineString([(7, 8), (5, 8), (7, 4), (-7, 8)])]
+        merged = picogeojson.merge(lns)
+        self.assertEqual(type(merged).__name__, "MultiLineString")
+        self.assertEqual(len(merged.coordinates), 4)
+
+    def test_merge_geometries(self):
+        gms = [picogeojson.LineString([(1, 2), (2, 2), (1, 1), (-1, 2)]),
+               picogeojson.Point((3, 4)),
+               picogeojson.Polygon([[(5, 6), (4, 6), (2, 5), (5, 5)]])]
+        merged = picogeojson.merge(gms)
+        self.assertEqual(type(merged).__name__, "GeometryCollection")
+        self.assertEqual(len(merged.geometries), 3)
+
+    def test_merge_features(self):
+        gms = [picogeojson.Feature(
+                    picogeojson.LineString([(1, 2), (2, 2), (1, 1), (-1, 2)]),
+                    {"desc": "single linestring"}
+                    ),
+               picogeojson.FeatureCollection(
+                   [picogeojson.Feature(picogeojson.Point((3, 4)),
+                       {"desc": "single point"}),
+                    picogeojson.Feature(picogeojson.GeometryCollection(
+                       [picogeojson.LineString([(1, 2), (2, 3), (1, 4)]),
+                        picogeojson.Point((-2, -3))]),
+                       {"desc": "collection of geometries"})]
+                    ),
+               picogeojson.Feature(picogeojson.Polygon([[(5, 6), (4, 6), (2, 5), (5, 5)]]),
+                   {"desc": "single polygon"})]
+        merged = picogeojson.merge(gms)
+        self.assertEqual(type(merged).__name__, "FeatureCollection")
+        self.assertEqual(len(merged.features), 4)
+
 if __name__ == "__main__":
     unittest.main()
