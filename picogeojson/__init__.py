@@ -7,7 +7,7 @@ from .types import (Point, LineString, Polygon,
 
 from .geojson import (Serializer, Deserializer,
                       DEFAULTCRS,
-                      fromfile, fromstring, tostring)
+                      fromfile, fromstring, tostring, loads, dumps)
 
 from . import antimeridian
 from . import orientation

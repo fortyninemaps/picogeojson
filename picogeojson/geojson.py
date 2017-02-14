@@ -301,3 +301,7 @@ def fromstring(s, **kw):
 def tostring(geom, **kw):
     s = Serializer(**kw)
     return s(geom)
+
+# Aliases for python-geojson compatibility
+loads = fromstring
+dumps = tostring

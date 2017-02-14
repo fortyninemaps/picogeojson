@@ -22,6 +22,20 @@ class DeserializerTests(unittest.TestCase):
         self.assertEqual(res.coordinates, [100.0, 0.0])
         return
 
+    def test_shorthand_string(self):
+        with open(os.path.join(TESTDATA, 'point.json'), 'r') as f:
+            string = f.read()
+        res = picogeojson.fromstring(string)
+        self.assertEqual(res.coordinates, [100.0, 0.0])
+        return
+
+    def test_shorthand_string_compat(self):
+        with open(os.path.join(TESTDATA, 'point.json'), 'r') as f:
+            string = f.read()
+        res = picogeojson.loads(string)
+        self.assertEqual(res.coordinates, [100.0, 0.0])
+        return
+
     def test_point_read(self):
         res = self.deserializer.fromfile(os.path.join(TESTDATA, 'point.json'))
         self.assertEqual(res.coordinates, [100.0, 0.0])
@@ -101,6 +115,11 @@ class SerializerTests(unittest.TestCase):
     def test_shorthand(self):
         pt = picogeojson.Point((44.0, 17.0), DEFAULTCRS)
         d = json.loads(picogeojson.tostring(pt))
+        self.assertEqual(tuple(pt.coordinates), tuple(d["coordinates"]))
+
+    def test_shorthand_compat(self):
+        pt = picogeojson.Point((44.0, 17.0), DEFAULTCRS)
+        d = json.loads(picogeojson.dumps(pt))
         self.assertEqual(tuple(pt.coordinates), tuple(d["coordinates"]))
 
     def test_serialize_point(self):
