@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 def geom_bbox(geom):
     if type(geom).__name__ == "Point":
@@ -45,10 +46,16 @@ def feature_collection_bbox(coll):
     return bbx
 
 def coordstring_bbox(coordinates):
+    """ Given a string of coodinates, return the bounds as a *2×N* length list,
+    where *N* is the number of dimensions (at least two).
+
+    The bounding list is structured `xmin, ymin[, ...], xmax, ymax[, ...]`.
+    """
     ndim = len(coordinates[0])
     bbx = [0 for _ in range(2*ndim)]
-    for dim in range(ndim):
-        bbx[dim] = min(crds[dim] for crds in coordinates)
-        bbx[dim+ndim] = max(crds[dim] for crds in coordinates)
+    components = [[a[i] for a in coordinates] for i in range(ndim)]
+    for i, comp in enumerate(components):
+        bbx[i] = min(comp)
+        bbx[i+ndim] = max(comp)
     return bbx
 

@@ -13,7 +13,11 @@ Likewise,
 - `Serializer` validates and converts named tuples to GeoJSON strings.
 """
 
-import json
+try:
+    import ujson as json
+except ImportError:
+    import json
+
 from .types import (Point, LineString, Polygon,
                     MultiPoint, MultiLineString, MultiPolygon,
                     GeometryCollection, Feature, FeatureCollection)
@@ -24,23 +28,6 @@ from .bbox import geom_bbox, geometry_collection_bbox, feature_bbox, feature_col
 
 DEFAULTCRS = {"type": "name",
               "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
-
-class NumpyAwareJSONEncoder(json.JSONEncoder):
-    """ Numpy-specific numbers prior to 1.9 don't inherit from Python numeric
-    ABCs. This class is a hack to coerce numpy values into Python types for
-    JSON serialization. """
-
-    def default(self, o):
-        if not hasattr(o, "dtype") or (hasattr(o, "__len__") and (len(o) != 1)):
-            return json.JSONEncoder.default(self, o)
-        elif o.dtype in ("int8", "int16", "int32", "int64"):
-            return int(o)
-        elif o.dtype in ("float16", "float32", "float64", "float128"):
-            return float(o)
-        elif o.dtype in ("complex64", "complex128", "complex256"):
-            return complex(o)
-        else:
-            raise TypeError("not a recognized type")
 
 class Deserializer(object):
 
@@ -165,9 +152,8 @@ class Serializer(object):
         self.write_bbox = write_bbox
         return
 
-    def __call__(self, geom, indent=None):
-        return json.dumps(self.geojson_asdict(geom), indent=indent,
-                          cls=NumpyAwareJSONEncoder)
+    def __call__(self, geom, indent=0):
+        return json.dumps(self.geojson_asdict(geom), indent=indent)
 
     def geojson_asdict(self, geom, parent_crs=None):
         if isinstance(geom, Feature):
