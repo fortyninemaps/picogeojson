@@ -13,12 +13,17 @@ Likewise,
 - `Serializer` validates and converts named tuples to GeoJSON strings.
 """
 
-try:
-    import ujson as json
-    _INDENT = 0
-except ImportError:
+import os
+_INDENT = None
+if os.environ.get("PICOGEOJSON_PYJSON", 0) == "0":
+    try:
+        import ujson as json
+        _INDENT = 0
+    except ImportError:
+        import json
+else:
+    print("Using 'json' module because PICOGEOJSON_PYJSON is set")
     import json
-    _INDENT = None
 
 from .types import (Point, LineString, Polygon,
                     MultiPoint, MultiLineString, MultiPolygon,
