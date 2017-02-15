@@ -15,8 +15,10 @@ Likewise,
 
 try:
     import ujson as json
+    _INDENT = 0
 except ImportError:
     import json
+    _INDENT = None
 
 from .types import (Point, LineString, Polygon,
                     MultiPoint, MultiLineString, MultiPolygon,
@@ -152,7 +154,7 @@ class Serializer(object):
         self.write_bbox = write_bbox
         return
 
-    def __call__(self, geom, indent=0):
+    def __call__(self, geom, indent=_INDENT):
         return json.dumps(self.geojson_asdict(geom), indent=indent)
 
     def geojson_asdict(self, geom, parent_crs=None):
