@@ -49,6 +49,8 @@ class FeatureCollection(object):
     crs = attr.ib(default=None)
 
 def merge(items):
+    """ Combine a list of GeoJSON types into the single most specific type that
+    retains all information. """
     t0 = type(items[0]).__name__
     if all(type(g).__name__ == t0 for g in items[1:]):
         if t0 == "Point":
@@ -79,4 +81,49 @@ def merge(items):
         return FeatureCollection(features, crs=items[0].crs)
     else:
         raise TypeError("no rule to merge {}".format(set(type(g).__name__ for g in items)))
+
+def _set_crs(items, crs):
+    for item in items:
+        item.crs = crs
+    return items
+
+def burst(item, crs=None):
+    """ Break a composite GeoJSON type into atomic Points, LineStrings,
+    Polygons, or Features. """
+    if type(item).__name__ == "GeometryCollection":
+        geometries = []
+        for geometry in item.geometries:
+            geometries.extend(burst(geometry, crs=item.crs))
+        return geometries
+
+    elif type(item).__name__ == "FeatureCollection":
+        features = [feature for feature in item.features]
+        if item.crs is not None:
+            for feature in features:
+                feature.crs = item.crs
+        return features
+
+    elif type(item).__name__ == "MultiPoint":
+        geometries = [Point(coords, crs=item.crs) for coords in item.coordinates]
+        if crs is not None:
+            _set_crs(geometries, crs)
+        return geometries
+
+    elif type(item).__name__ == "MultiLineString":
+        geometries = [LineString(coords, crs=item.crs) for coords in item.coordinates]
+        if crs is not None:
+            _set_crs(geometries, crs)
+        return geometries
+
+    elif type(item).__name__ == "MultiPolygon":
+        geometries = [Polygon(coords, crs=item.crs) for coords in item.coordinates]
+        if crs is not None:
+            _set_crs(geometries, crs)
+        return geometries
+
+    else:
+        geometries = [item]
+        if crs is not None:
+            _set_crs(geometries, crs)
+        return geometries
 
