@@ -64,8 +64,8 @@ def merge(items):
         elif t0 == "Feature":
             return FeatureCollection(items, crs=items[0].crs)
         elif t0 == "FeatureCollection":
-            features = list(itertools.chain([f.features for f in items]))
-            return FeatureCollection(features, crs=items[0].crs)
+            features = itertools.chain.from_iterable([f.features for f in items])
+            return FeatureCollection(list(features), crs=items[0].crs)
         else:
             raise TypeError()
     elif "Feature" not in (type(g).__name__ for g in items) and \

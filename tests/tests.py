@@ -403,6 +403,27 @@ class MergeBurstTests(unittest.TestCase):
         self.assertEqual(type(merged).__name__, "MultiLineString")
         self.assertEqual(len(merged.coordinates), 4)
 
+    def test_merge_polygons(self):
+        plg = [picogeojson.Polygon([[(1, 2), (2, 2), (1, 1), (-1, 2)]]),
+               picogeojson.Polygon([[(3, 4), (3, 4), (3, 2), (-3, 4)]]),
+               picogeojson.Polygon([[(5, 6), (4, 6), (5, 3), (-5, 6)]]),
+               picogeojson.Polygon([[(7, 8), (5, 8), (7, 4), (-7, 8)]])]
+        merged = merge(plg)
+        self.assertEqual(type(merged).__name__, "MultiPolygon")
+        self.assertEqual(len(merged.coordinates), 4)
+
+    def test_merge_geometrycollections(self):
+        gcs = [picogeojson.GeometryCollection([
+                    picogeojson.Point((1, 2)),
+                    picogeojson.LineString([(2, 2), (1, 1), (-1, 2)])]),
+               picogeojson.GeometryCollection([
+                    picogeojson.MultiPoint([(7, 8), (5, 8), (7, 4), (-7, 8)]),
+                    picogeojson.Point((9, 8))])
+               ]
+        merged = merge(gcs)
+        self.assertEqual(type(merged).__name__, "GeometryCollection")
+        self.assertEqual(len(merged.geometries), 2)
+
     def test_merge_geometries(self):
         gms = [picogeojson.LineString([(1, 2), (2, 2), (1, 1), (-1, 2)]),
                picogeojson.Point((3, 4)),
@@ -412,6 +433,23 @@ class MergeBurstTests(unittest.TestCase):
         self.assertEqual(len(merged.geometries), 3)
 
     def test_merge_features(self):
+        gms = [picogeojson.Feature(
+                    picogeojson.LineString([(1, 2), (2, 2), (1, 1), (-1, 2)]),
+                    {"desc": "single linestring"}
+                    ),
+               picogeojson.Feature(picogeojson.Point((3, 4)),
+                   {"desc": "single point"}),
+               picogeojson.Feature(picogeojson.GeometryCollection(
+                   [picogeojson.LineString([(1, 2), (2, 3), (1, 4)]),
+                    picogeojson.Point((-2, -3))]),
+                   {"desc": "collection of geometries"}),
+               picogeojson.Feature(picogeojson.Polygon([[(5, 6), (4, 6), (2, 5), (5, 5)]]),
+                   {"desc": "single polygon"})]
+        merged = merge(gms)
+        self.assertEqual(type(merged).__name__, "FeatureCollection")
+        self.assertEqual(len(merged.features), 4)
+
+    def test_merge_features_featurecollections(self):
         gms = [picogeojson.Feature(
                     picogeojson.LineString([(1, 2), (2, 2), (1, 1), (-1, 2)]),
                     {"desc": "single linestring"}
@@ -427,6 +465,25 @@ class MergeBurstTests(unittest.TestCase):
                picogeojson.Feature(picogeojson.Polygon([[(5, 6), (4, 6), (2, 5), (5, 5)]]),
                    {"desc": "single polygon"})]
         merged = merge(gms)
+        self.assertEqual(type(merged).__name__, "FeatureCollection")
+        self.assertEqual(len(merged.features), 4)
+
+    def test_merge_featurecollections(self):
+        fcs = [picogeojson.FeatureCollection([
+                   picogeojson.Feature(
+                        picogeojson.LineString([(1, 2), (2, 2), (1, 1), (-1, 2)]),
+                        {"desc": "single linestring"}),
+                   picogeojson.Feature(
+                        picogeojson.LineString([(0, 2), (1, -1), (1, 0), (-1, 3)]),
+                        {"desc": "another linestring"})]),
+               picogeojson.FeatureCollection(
+                   [picogeojson.Feature(picogeojson.Point((3, 4)),
+                       {"desc": "single point"}),
+                    picogeojson.Feature(picogeojson.GeometryCollection(
+                       [picogeojson.LineString([(1, 2), (2, 3), (1, 4)]),
+                        picogeojson.Point((-2, -3))]),
+                       {"desc": "collection of geometries"})])]
+        merged = merge(fcs)
         self.assertEqual(type(merged).__name__, "FeatureCollection")
         self.assertEqual(len(merged.features), 4)
 
@@ -453,12 +510,22 @@ class MergeBurstTests(unittest.TestCase):
         self.assertEqual(len(result), 5)
         self.assertEqual(result[0].crs, DEFAULTCRS)
 
+    def test_burst_multipolygon(self):
+        result = burst(picogeojson.MultiPolygon([
+                                    [[(1, 2), (2, 3), (1, 3)]],
+                                    [[(1, 2), (-2, -3), (-1, -3)]]],
+                                    crs=DEFAULTCRS))
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0].crs, DEFAULTCRS)
+
     def test_burst_feature_collection(self):
         result = burst(picogeojson.FeatureCollection([
             picogeojson.Feature(picogeojson.Point((1, 2)),
                                 properties={"desc": "a point"}),
-            picogeojson.Feature(picogeojson.Polygon([[(1, 2), (2, 3), (1, 3)]]),
-                                properties={"desc": "a triangle"})
+            picogeojson.Feature(picogeojson.MultiPolygon([
+                                    [[(1, 2), (2, 3), (1, 3)]],
+                                    [[(1, 2), (-2, -3), (-1, -3)]]]),
+                                properties={"desc": "some triangles"})
             ], crs=DEFAULTCRS))
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0].crs, DEFAULTCRS)
