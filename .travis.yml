@@ -7,6 +7,15 @@ python:
   - "3.6"
   - "pypy"
   #- "pypy3"
+env:
+  - PICOGEOJSON_PYJSON=0
+  - PICOGEOJSON_PYJSON=1
+matrix:
+  exclude:
+    - python: "pypy"
+      env: PICOGEOJSON_PYJSON=0
+before_install:
+  - if [[ "$PICOGEOJSON_PYJSON" == "0" ]]; then pip install ujson; fi
 install:
   - "pip install ."
   - "pip install coverage coveralls"
