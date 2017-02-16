@@ -53,6 +53,11 @@ def merge(items):
     retains all information. """
     t0 = type(items[0]).__name__
     if all(type(g).__name__ == t0 for g in items[1:]):
+        if items[0].crs is None and any(it.crs is not None for it in items[1:]):
+            raise ValueError("all inputs must share the same CRS")
+        elif any(items[0].crs != it.crs for it in items[1:]):
+            raise ValueError("all inputs must share the same CRS")
+
         if t0 == "Point":
             return MultiPoint([g.coordinates for g in items], crs=items[0].crs)
         elif t0 == "LineString":
@@ -67,10 +72,10 @@ def merge(items):
             features = itertools.chain.from_iterable([f.features for f in items])
             return FeatureCollection(list(features), crs=items[0].crs)
         else:
-            raise TypeError()
+            raise TypeError("unhandled type '{}'".format(type(items[0]).__name__))
     elif "Feature" not in (type(g).__name__ for g in items) and \
          "FeatureCollection" not in (type(g).__name__ for g in items):
-        return GeometryCollection(items, crs=items[0].crs)
+        return GeometryCollection(items)
     elif all(type(g).__name__ in ("Feature", "FeatureCollection") for g in items):
         features = []
         for item in items:
@@ -78,7 +83,7 @@ def merge(items):
                 features.append(item)
             else:
                 features.extend(item.features)
-        return FeatureCollection(features, crs=items[0].crs)
+        return FeatureCollection(features)
     else:
         raise TypeError("no rule to merge {}".format(set(type(g).__name__ for g in items)))
 

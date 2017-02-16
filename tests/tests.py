@@ -39,6 +39,21 @@ class DeserializerTests(unittest.TestCase):
     def test_point_read(self):
         res = self.deserializer.fromfile(os.path.join(TESTDATA, 'point.json'))
         self.assertEqual(res.coordinates, [100.0, 0.0])
+
+        # check __call__ version
+        res = self.deserializer(os.path.join(TESTDATA, 'point.json'))
+        self.assertEqual(res.coordinates, [100.0, 0.0])
+        return
+
+    def test_point_read_fileobject(self):
+        with open(os.path.join(TESTDATA, 'point.json'), 'r') as f:
+            res = self.deserializer.fromfile(f)
+        self.assertEqual(res.coordinates, [100.0, 0.0])
+
+        # check __call__ version
+        with open(os.path.join(TESTDATA, 'point.json'), 'r') as f:
+            res = self.deserializer(f)
+        self.assertEqual(res.coordinates, [100.0, 0.0])
         return
 
     def test_linestring_read(self):
@@ -238,7 +253,7 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(d.get("crs", ""), DEFAULTCRS)
         return
 
-    def test_dedup_crs_geometry_collection(self):
+    def test_dedup_crs_geometrycollection(self):
         crs = {"type": "name", "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
         collection = picogeojson.GeometryCollection(
                 [picogeojson.Point((1, 2), crs=crs)],
@@ -305,6 +320,38 @@ class AntimerdianTests(unittest.TestCase):
         self.assertEqual(len(res.coordinates[0]), 2)
         self.assertEqual(len(res.coordinates[1]), 2)
 
+    def test_multilinestring_split(self):
+        res = picogeojson.antimeridian.antimeridian_cut(
+                picogeojson.MultiLineString(
+                            [[(172, 34), (178, 36), (-179, 37), (-177, 39)],
+                             [(172, -34), (178, -36), (-179, -37), (-177, -39)]])
+                )
+        self.assertEqual(len(res.coordinates), 4)
+
+    def test_featurecollection_split(self):
+        res = picogeojson.antimeridian.antimeridian_cut(
+                picogeojson.FeatureCollection([
+                    picogeojson.Feature(
+                        picogeojson.LineString([(172, 34), (178, 36), (-179, 37), (-177, 39)]),
+                        {"desc": "a linestring spanning the dateline"}),
+                    picogeojson.Feature(
+                        picogeojson.Point((1,2)),
+                        {"desc": "a single point"}),
+                    picogeojson.Feature(
+                        picogeojson.GeometryCollection([
+                            picogeojson.Polygon([[(178, 3), (-178, 5), (-178, 7), (178, 5)]]),
+                            picogeojson.LineString([(172, -34), (178, -36), (-179, -37), (-177, -39)])]),
+                        {"desc": "a geometry collection containing a polygon and a linestring"})
+                    ]))
+        self.assertEqual(type(res).__name__, "FeatureCollection")
+        self.assertEqual(len(res.features), 3)
+        self.assertEqual(type(res.features[0].geometry).__name__,
+                         "MultiLineString")
+        self.assertEqual(type(res.features[2].geometry).__name__,
+                         "GeometryCollection")
+        self.assertEqual(type(res.features[2].geometry.geometries[0]).__name__,
+                         "MultiPolygon")
+
 class OrientationTests(unittest.TestCase):
 
     def test_isccw(self):
@@ -338,7 +385,7 @@ class BboxTests(unittest.TestCase):
         bbx = bbox.geom_bbox(p)
         self.assertEqual(bbx, [2, 3, 1, 2, 3, 1])
 
-    def test_geometry_collection_bbox_2(self):
+    def test_geometrycollection_bbox_2(self):
         collection = picogeojson.GeometryCollection(
                             [picogeojson.Point((3, 4), None),
                              picogeojson.Point((5, 6), None),
@@ -347,7 +394,7 @@ class BboxTests(unittest.TestCase):
         bbx = bbox.geom_bbox(collection)
         self.assertEqual(bbx, [1, 2, 5, 6])
 
-    def test_geometry_collection_bbox_3(self):
+    def test_geometrycollection_bbox_3(self):
         collection = picogeojson.GeometryCollection(
                             [picogeojson.Point((3, 4, 1), None),
                              picogeojson.Point((5, 6, 2), None),
@@ -499,7 +546,7 @@ class MergeBurstTests(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(type(result[0]).__name__, "Point")
 
-    def test_burst_geometry_collection(self):
+    def test_burst_geometrycollection(self):
         result = burst(picogeojson.GeometryCollection([
             picogeojson.Point(1, 2),
             picogeojson.LineString([(3, 4), (5, 6), (7, 6)]),

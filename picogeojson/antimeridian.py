@@ -1,10 +1,5 @@
 # Implements antimeridian cutting
-# problems:
-# - splitting polygon holes on the antimeridian
-# - splitting multipolygons where not all parts cross antimeridian
-
 import itertools
-
 from .types import (LineString, MultiLineString,
                     Polygon, MultiPolygon,
                     GeometryCollection,
@@ -154,8 +149,7 @@ def antimeridian_cut(obj):
         parts = [antimeridian_cut(Polygon(c)) for c in obj.coordinates]
         return MultiPolygon([p.coordinates for p in parts], obj.crs)
     elif isinstance(obj, GeometryCollection):
-        parts = list(itertools.chain(*[antimeridian_cut(geom)
-                                       for geom in obj.geometries]))
+        parts = [antimeridian_cut(geom) for geom in obj.geometries]
         return GeometryCollection(parts, obj.crs)
     elif isinstance(obj, Feature):
         return Feature(antimeridian_cut(obj.geometry), obj.properties,

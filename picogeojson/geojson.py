@@ -50,7 +50,7 @@ class Deserializer(object):
     def __call__(self, f):
         try:
             return self.fromstring(f)
-        except ValueError:
+        except (TypeError, json.decoder.JSONDecodeError):
             return self.fromfile(f)
 
     def fromstring(self, s):

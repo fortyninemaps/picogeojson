@@ -1,9 +1,5 @@
 # ensures that Polygon rings are counter-clockwise
 
-from .types import (Polygon, MultiPolygon,
-                    GeometryCollection,
-                    Feature, FeatureCollection)
-
 def _isleft(p, p0, p1):
     return ((p1[0]-p0[0])*(p[1]-p0[1]) - (p[0]-p0[0])*(p1[1]-p0[1])) > 0
 
