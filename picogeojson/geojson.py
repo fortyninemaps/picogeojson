@@ -15,7 +15,7 @@ Likewise,
 
 import os
 _INDENT = None
-if os.environ.get("PICOGEOJSON_PYJSON", 0) == "0":
+if os.environ.get("PICOGEOJSON_PYJSON", "0") == "0":
     try:
         import ujson as json
         _INDENT = 0
