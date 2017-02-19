@@ -13,12 +13,24 @@ GeoJSON files or strings are read using `fromfile()` or `fromstring()` (alias
 `loads()`).
 
 ```python
-result = picogeojson(fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}'))
+result = picogeojson.fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}')
 # -> Point(coordinates=[1.0, 3.0])
 ```
 
 GeoJSON objects may be constructed in Python and composed (`merge()`) or split
 (`burst()`).
+
+```python
+points = [picogeojson.Point((1, 2)),
+          picogeojson.Point((3, 4)),
+          picogeojson.Point((5, 6))]
+
+merged_points = picogeojson.merge(points)
+# -> MultiPoint(coordinates=[(1, 2), (3, 4), (5, 6)])
+
+split_points = picogeojson.burst(merged_points)
+# -> [Point((1, 2)), Point((3, 4)), Point((5, 6))]
+```
 
 GeoJSON objects are serialized with `tostring()` (alias `dumps()`).
 
@@ -31,12 +43,11 @@ picogeojson.tostring(
 
 Keyword arguments can be passed to `tostring()` that
 - enforce Polygon/MultiPolygon rotation direction, with counterclockwise for
-  external rings and clockwise for internal rings
+  external rings and clockwise for internal rings (`enforce_poly_winding`)
 - split objects that cross the international dateline into multipart objects,
-  for easier processing
+  for easier processing (`antimeridian_cutting`)
 - control whether a `bbox` member is computed and added to the JSON output
-
-`Deserializer` and `Serializer` objects are provided for customization.
+  (`write_bbox`)
 
 *picogeojson* will leverage [ujson](https://pypi.python.org/pypi/ujson) as a
 backend if it is installed. Otherwise, it uses Python's built-in `json` module.
