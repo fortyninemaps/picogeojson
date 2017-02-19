@@ -43,7 +43,6 @@ class Deserializer(object):
         passed by file using deserializer.fromfile() or by value using
         deserializer.fromstring().
         """
-        self.jsondict = {}
         self.defaultcrs = defaultcrs
         return
 
@@ -54,17 +53,14 @@ class Deserializer(object):
             return self.fromfile(f)
 
     def fromstring(self, s):
-        self.jsondict = json.loads(s)
-        return self.deserialize()
+        return self.deserialize(json.loads(s))
 
     def fromfile(self, f):
         if hasattr(f, 'read'):
-            self.jsondict = json.load(f)
-            return self.deserialize()
+            return self.deserialize(json.load(f))
         elif isinstance(f, str):
             with open(f) as f:
-                self.jsondict = json.load(f)
-            return self.deserialize()
+                return self.deserialize(json.load(f))
         else:
             raise TypeError("input must be a file object or a filename")
 
@@ -109,9 +105,7 @@ class Deserializer(object):
         features = [self._parseFeature(f) for f in o["features"]]
         return FeatureCollection(features, crs)
 
-    def deserialize(self, d=None):
-        if d is None:
-            d = self.jsondict
+    def deserialize(self, d):
         t = d["type"]
         if t == "FeatureCollection":
             return self._parseFeatureCollection(d)

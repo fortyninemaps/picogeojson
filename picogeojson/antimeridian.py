@@ -88,11 +88,11 @@ def contains(poly0, poly1):
     return False
 
 def _crosses_antimeridian(coordinates):
-    """ Determines whether a geometry or feature crosses the antimeridian be
+    """ Determines whether a geometry or feature crosses the antimeridian by
     searching exhaustively.
     """
-    for i in range(len(coordinates)-1):
-        if _seg_crosses(coordinates[i][0], coordinates[i+1][0]):
+    for c0, c1 in zip(coordinates[:-1], coordinates[1:]):
+        if _seg_crosses(c0[0], c1[0]):
             return True
     return False
 
