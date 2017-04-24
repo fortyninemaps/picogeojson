@@ -8,6 +8,7 @@ import picogeojson
 from picogeojson import Serializer, Deserializer, merge, burst, DEFAULTCRS
 import picogeojson.bbox as bbox
 from picogeojson.geojson import fixed_precision
+from picogeojson.result import GeoJSONResult
 
 TESTDATA = "tests/"
 
@@ -22,6 +23,13 @@ class DeserializerTests(unittest.TestCase):
         self.assertEqual(res.coordinates, [100.0, 0.0])
         return
 
+    def test_shorthand_result(self):
+        res = picogeojson.result_fromfile(os.path.join(TESTDATA, 'point.json'))
+        self.assertEqual(type(res), GeoJSONResult)
+        for pt in res.points():
+            self.assertEqual(pt.coordinates, [100.0, 0.0])
+        return
+
     def test_shorthand_string(self):
         with open(os.path.join(TESTDATA, 'point.json'), 'r') as f:
             string = f.read()
@@ -34,6 +42,15 @@ class DeserializerTests(unittest.TestCase):
             string = f.read()
         res = picogeojson.loads(string)
         self.assertEqual(res.coordinates, [100.0, 0.0])
+        return
+
+    def test_shorthand_string_result(self):
+        with open(os.path.join(TESTDATA, 'point.json'), 'r') as f:
+            string = f.read()
+        res = picogeojson.result_fromstring(string)
+        self.assertEqual(type(res), GeoJSONResult)
+        for pt in res.points():
+            self.assertEqual(pt.coordinates, [100.0, 0.0])
         return
 
     def test_point_read(self):
@@ -429,6 +446,52 @@ class FixedPrecisionTests(unittest.TestCase):
     def test_nested_list(self):
         self.assertEqual(fixed_precision([[1.234567, 2.345678], 3.456789], 3),
                                          [[1.235, 2.346], 3.457])
+
+
+class ResultTests(unittest.TestCase):
+
+    def setUp(self):
+        self.geometrycollection = \
+                picogeojson.GeometryCollection(
+                    [picogeojson.Point((1, 2)),
+                     picogeojson.Polygon([[]]),
+                     picogeojson.LineString([(1, 1), (2, 2), (3, 3)]),
+                     picogeojson.GeometryCollection(
+                         [picogeojson.Point((3, 4)),
+                          picogeojson.MultiPolygon([[[]], [[]], [[]]]),
+                          picogeojson.Point((5, 6)),
+                          picogeojson.LineString([(1, 1), (2, 2), (3, 3)]),
+                          picogeojson.Polygon([[]])],
+                         DEFAULTCRS),
+                     picogeojson.MultiPoint([(7, 8), (9, 10)]),
+                     picogeojson.LineString([(1, 1), (2, 2), (3, 3)]),
+                     picogeojson.Point((11, 12)),
+                     picogeojson.LineString([(1, 1), (2, 2), (3, 3)]),
+                     picogeojson.MultiLineString([[(1, 1), (2, 2), (3, 3)],
+                                                  [(4, 4), (5, 5), (6, 6)]]),
+                     ],
+                    DEFAULTCRS)
+
+    def test_get_points(self):
+        result = GeoJSONResult(self.geometrycollection)
+        count = 0
+        for pt in result.points():
+            count += 1
+        self.assertEqual(count, 4)
+
+    def test_get_linestrings(self):
+        result = GeoJSONResult(self.geometrycollection)
+        count = 0
+        for ls in result.linestrings():
+            count += 1
+        self.assertEqual(count, 4)
+
+    def test_get_polygons(self):
+        result = GeoJSONResult(self.geometrycollection)
+        count = 0
+        for ls in result.polygons():
+            count += 1
+        self.assertEqual(count, 2)
 
 class MergeBurstTests(unittest.TestCase):
 

@@ -1,4 +1,4 @@
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 
 from .types import (Point, LineString, Polygon,
                     MultiPoint, MultiLineString, MultiPolygon,
@@ -7,7 +7,8 @@ from .types import (Point, LineString, Polygon,
 
 from .geojson import (Serializer, Deserializer,
                       DEFAULTCRS,
-                      fromfile, fromstring, tostring, loads, dumps)
+                      fromfile, fromstring, tostring, loads, dumps,
+                      result_fromstring, result_fromfile)
 
 from . import antimeridian
 from . import orientation

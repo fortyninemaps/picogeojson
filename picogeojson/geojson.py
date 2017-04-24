@@ -4,13 +4,19 @@ Overview
 
 The functions
 
-- `fromstring()` and `fromfile()` return namedtuples from GeoJSON input.
-- `tostring()` returns GeoJSON from a namedtuple.
+- `fromstring()` and `fromfile()` return namedtuples from GeoJSON input
+- `tostring()` returns GeoJSON from a namedtuple
+- `result_fromstring()` and `result_fromfile()` return namedtuples wrapped as a
+  GeoJSONResult so that values of a specific types can be safely extracted
 
-Likewise,
+Additionally,
 
-- `Deserializer` converts GeoJSON strings or files to named tuples.
-- `Serializer` validates and converts named tuples to GeoJSON strings.
+- `loads()` and `dumps()` are aliases for `fromstring()` and `tostring()`
+
+The functions above use the lower-level classes
+
+- `Deserializer` to convert GeoJSON strings or files to named tuples
+- `Serializer` to validate and convert named tuples to GeoJSON strings
 """
 
 import os
@@ -32,6 +38,7 @@ from .types import (Point, LineString, Polygon,
 from .antimeridian import antimeridian_cut
 from .orientation import is_counterclockwise
 from .bbox import geom_bbox, geometry_collection_bbox, feature_bbox, feature_collection_bbox
+from .result import GeoJSONResult
 
 DEFAULTCRS = {"type": "name",
               "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
@@ -140,9 +147,9 @@ class Serializer(object):
     should be split, possibly changing type in the process (e.g. LineString to
     MultiLineString)
 
-    *enforce_poly_winding* ensures that serialized Polygons and MultiPolygons
-    have counterclockwise external boundaries and clockwise internal boundaries
-    (holes)
+    *enforce_poly_winding* ensures that serialized Polygon and MultiPolygon
+    instances have counterclockwise external boundaries and clockwise internal
+    boundaries (holes)
 
     *write_bbox* causes geometries and features to have a `bbox` member
     """
@@ -284,6 +291,14 @@ def fromfile(f, **kw):
 def fromstring(s, **kw):
     d = Deserializer(**kw)
     return d.fromstring(s)
+
+def result_fromfile(f, **kw):
+    d = Deserializer(**kw)
+    return GeoJSONResult(d.fromfile(f))
+
+def result_fromstring(s, **kw):
+    d = Deserializer(**kw)
+    return GeoJSONResult(d.fromstring(s))
 
 def tostring(geom, **kw):
     s = Serializer(**kw)
