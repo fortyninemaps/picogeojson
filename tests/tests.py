@@ -476,6 +476,7 @@ class ResultTests(unittest.TestCase):
         result = GeoJSONResult(self.geometrycollection)
         count = 0
         for pt in result.points():
+            self.assertTrue(isinstance(pt, picogeojson.Point))
             count += 1
         self.assertEqual(count, 4)
 
@@ -483,15 +484,41 @@ class ResultTests(unittest.TestCase):
         result = GeoJSONResult(self.geometrycollection)
         count = 0
         for ls in result.linestrings():
+            self.assertTrue(isinstance(ls, picogeojson.LineString))
             count += 1
         self.assertEqual(count, 4)
 
     def test_get_polygons(self):
         result = GeoJSONResult(self.geometrycollection)
         count = 0
-        for ls in result.polygons():
+        for pg in result.polygons():
+            self.assertTrue(isinstance(pg, picogeojson.Polygon))
             count += 1
         self.assertEqual(count, 2)
+
+    def test_get_multipoints(self):
+        result = GeoJSONResult(self.geometrycollection)
+        count = 0
+        for mpt in result.multipoints():
+            self.assertTrue(isinstance(mpt, picogeojson.MultiPoint))
+            count += 1
+        self.assertEqual(count, 1)
+
+    def test_get_multilinestrings(self):
+        result = GeoJSONResult(self.geometrycollection)
+        count = 0
+        for mls in result.multilinestrings():
+            self.assertTrue(isinstance(mls, picogeojson.MultiLineString))
+            count += 1
+        self.assertEqual(count, 1)
+
+    def test_get_multipolygons(self):
+        result = GeoJSONResult(self.geometrycollection)
+        count = 0
+        for mpg in result.multipolygons():
+            self.assertTrue(isinstance(mpg, picogeojson.MultiPolygon))
+            count += 1
+        self.assertEqual(count, 1)
 
 class MergeBurstTests(unittest.TestCase):
 

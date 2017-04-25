@@ -36,4 +36,34 @@ class GeoJSONResult(object):
                 for geom in obj.geometries:
                     objs.append(geom)
 
+    def multipoints(self):
+        objs = [self.obj]
+        while len(objs) != 0:
+            obj = objs.pop()
+            if type(obj).__name__ == "MultiPoint":
+                yield obj
+            elif type(obj).__name__ == "GeometryCollection":
+                for geom in obj.geometries:
+                    objs.append(geom)
+
+    def multilinestrings(self):
+        objs = [self.obj]
+        while len(objs) != 0:
+            obj = objs.pop()
+            if type(obj).__name__ == "MultiLineString":
+                yield obj
+            elif type(obj).__name__ == "GeometryCollection":
+                for geom in obj.geometries:
+                    objs.append(geom)
+
+    def multipolygons(self):
+        objs = [self.obj]
+        while len(objs) != 0:
+            obj = objs.pop()
+            if type(obj).__name__ == "MultiPolygon":
+                yield obj
+            elif type(obj).__name__ == "GeometryCollection":
+                for geom in obj.geometries:
+                    objs.append(geom)
+
 
