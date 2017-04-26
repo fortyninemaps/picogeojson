@@ -36,7 +36,7 @@ setup(
         keywords="minimal geojson",
         packages=find_packages(exclude=["tests"]),
         description="Minimal GeoJSON parser and emitter",
-        long_description=""""
+        long_description="""
 picogeojson
 ===========
 
