@@ -458,7 +458,7 @@ class ResultTests(unittest.TestCase):
                      picogeojson.LineString([(1, 1), (2, 2), (3, 3)]),
                      picogeojson.GeometryCollection(
                          [picogeojson.Point((3, 4)),
-                          picogeojson.MultiPolygon([[[]], [[]], [[]]]),
+                          picogeojson.MultiPolygon([[[[],[]], [[]]], [[[],[]]], [[[],[],[]]]]),
                           picogeojson.Point((5, 6)),
                           picogeojson.LineString([(1, 1), (2, 2), (3, 3)]),
                           picogeojson.Polygon([[]])],
@@ -467,10 +467,21 @@ class ResultTests(unittest.TestCase):
                      picogeojson.LineString([(1, 1), (2, 2), (3, 3)]),
                      picogeojson.Point((11, 12)),
                      picogeojson.LineString([(1, 1), (2, 2), (3, 3)]),
+                     picogeojson.FeatureCollection([
+                     ]),
                      picogeojson.MultiLineString([[(1, 1), (2, 2), (3, 3)],
                                                   [(4, 4), (5, 5), (6, 6)]]),
                      ],
                     DEFAULTCRS)
+
+        self.featurecollection = picogeojson.FeatureCollection([
+            picogeojson.Feature(picogeojson.Point((-1, -2)), {}),
+            picogeojson.Feature(picogeojson.MultiPolygon([[[[],[]], [[]]], [[[],[]]], [[[],[],[]]]]), {}),
+            picogeojson.Feature(picogeojson.LineString([(-1, -2), (-3, -4), (-5, -3)]), {}),
+            picogeojson.Feature(picogeojson.Polygon([[(-1, -2), (-3, -4), (-5, -3)]]), {}),
+            picogeojson.Feature(picogeojson.MultiPoint([(-1, -2), (-3, -4), (-5, -3)]), {}),
+            picogeojson.Feature(picogeojson.MultiLineString([[[],[],[]], [[],[],[]]]), {}),
+        ], DEFAULTCRS)
 
     def test_get_points(self):
         result = GeoJSONResult(self.geometrycollection)
@@ -517,6 +528,60 @@ class ResultTests(unittest.TestCase):
         count = 0
         for mpg in result.multipolygons():
             self.assertTrue(isinstance(mpg, picogeojson.MultiPolygon))
+            count += 1
+        self.assertEqual(count, 1)
+
+    def test_get_point_features(self):
+        result = GeoJSONResult(self.featurecollection)
+        count = 0
+        for f in result.point_features():
+            self.assertTrue(isinstance(f, picogeojson.Feature))
+            self.assertTrue(isinstance(f.geometry, picogeojson.Point))
+            count += 1
+        self.assertEqual(count, 1)
+
+    def test_get_linestring_features(self):
+        result = GeoJSONResult(self.featurecollection)
+        count = 0
+        for f in result.linestring_features():
+            self.assertTrue(isinstance(f, picogeojson.Feature))
+            self.assertTrue(isinstance(f.geometry, picogeojson.LineString))
+            count += 1
+        self.assertEqual(count, 1)
+
+    def test_get_polygon_features(self):
+        result = GeoJSONResult(self.featurecollection)
+        count = 0
+        for f in result.polygon_features():
+            self.assertTrue(isinstance(f, picogeojson.Feature))
+            self.assertTrue(isinstance(f.geometry, picogeojson.Polygon))
+            count += 1
+        self.assertEqual(count, 1)
+
+    def test_get_multipoint_features(self):
+        result = GeoJSONResult(self.featurecollection)
+        count = 0
+        for f in result.multipoint_features():
+            self.assertTrue(isinstance(f, picogeojson.Feature))
+            self.assertTrue(isinstance(f.geometry, picogeojson.MultiPoint))
+            count += 1
+        self.assertEqual(count, 1)
+
+    def test_get_multilinestring_features(self):
+        result = GeoJSONResult(self.featurecollection)
+        count = 0
+        for f in result.multilinestring_features():
+            self.assertTrue(isinstance(f, picogeojson.Feature))
+            self.assertTrue(isinstance(f.geometry, picogeojson.MultiLineString))
+            count += 1
+        self.assertEqual(count, 1)
+
+    def test_get_multipolygon_features(self):
+        result = GeoJSONResult(self.featurecollection)
+        count = 0
+        for f in result.multipolygon_features():
+            self.assertTrue(isinstance(f, picogeojson.Feature))
+            self.assertTrue(isinstance(f.geometry, picogeojson.MultiPolygon))
             count += 1
         self.assertEqual(count, 1)
 
