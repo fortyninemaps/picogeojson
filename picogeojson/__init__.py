@@ -1,4 +1,4 @@
-__version__ = "0.4.2"
+__version__ = "0.4.1"
 
 from .types import (Point, LineString, Polygon,
                     MultiPoint, MultiLineString, MultiPolygon,

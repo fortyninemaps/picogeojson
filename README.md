@@ -17,6 +17,22 @@ result = picogeojson.fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}')
 # -> Point(coordinates=[1.0, 3.0])
 ```
 
+Sometimes a particular type of GeoJSON object is expected (e.g. from an API GET
+request), but for safety the type needs to be checked. Alternatively, the
+`result_fromstring()` function can be used, which returns an object with safe
+accessors for specific GeoJSON types.
+
+```python
+result = picogeojson.result_fromstring(api_response.decode("utf-8"))
+
+# Expecting one or more points or multipoints
+for geom in result:
+    handle_point(geom)
+
+for geom in result.multipoints():
+    handle_multipoint(geom)
+```
+
 GeoJSON objects may be constructed in Python and composed (`merge()`) or split
 (`burst()`).
 
