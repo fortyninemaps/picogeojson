@@ -43,13 +43,32 @@ from .result import GeoJSONResult
 DEFAULTCRS = {"type": "name",
               "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
 
-class Deserializer(object):
+def _docstring_update(*s):
+    def wrapped(func):
+        func.__doc__ = func.__doc__.format(*s)
+        return func
+    return wrapped
 
-    def __init__(self, defaultcrs=DEFAULTCRS):
-        """ Parses GeoJSON strings and returns namedtuples. Strings can be
-        passed by file using deserializer.fromfile() or by value using
-        deserializer.fromstring().
-        """
+_deserializer_args = """
+    Parameters
+    ----------
+
+    defaultcrs : dict, optional
+        Default CRS member for incoming geometries. When inputs have no CRS
+        member, this CRS is assumed. In accordance with RFC 7946, this is taken
+        to be longitude and latitude on the WGS84 ellipsoid, however this
+        behaviour may be altered by assigning to the DEFAULTCRS module
+        variable.
+    """
+
+class Deserializer(object):
+    """ Parses GeoJSON strings and returns namedtuples. Strings can be passed
+    by file using deserializer.fromfile() or by value using
+    deserializer.fromstring().
+    """
+    def __init__(self, defaultcrs=None):
+        if defaultcrs is None:
+            defaultcrs = DEFAULTCRS
         self.defaultcrs = defaultcrs
         return
 
@@ -135,6 +154,24 @@ class Deserializer(object):
         else:
             raise TypeError("Unrecognized type {0}".format(t))
 
+_serializer_args = """
+    Parameters
+    ----------
+    antimeridian_cutting : bool
+        Indicates whether geometries spanning the dateline should be split,
+        possibly changing type in the process (e.g. LineString to
+        MultiLineString)
+
+    enforce_poly_winding:
+        Ensures that serialized Polygon and MultiPolygon instances have
+        counterclockwise external boundaries and clockwise internal boundaries
+        (holes). Note that some visualization backends (notably SVG and HTML
+        Canvas) take the opposing convention.
+
+    write_bbox : bool
+        Causes geometries and features to have a `bbox` member.
+    """
+
 class Serializer(object):
     """ Class for converting GeoJSON named tuples to GeoJSON.
 
@@ -142,18 +179,7 @@ class Serializer(object):
 
         serializer = GeoJSONSerializer(antimeridian_cutting=True)
         json_string = serializer(named_tuple)
-
-    *antimeridian_cutting* indicates whether geometries spanning the dateline
-    should be split, possibly changing type in the process (e.g. LineString to
-    MultiLineString)
-
-    *enforce_poly_winding* ensures that serialized Polygon and MultiPolygon
-    instances have counterclockwise external boundaries and clockwise internal
-    boundaries (holes)
-
-    *write_bbox* causes geometries and features to have a `bbox` member
     """
-
     def __init__(self, antimeridian_cutting=True, enforce_poly_winding=True, write_bbox=True):
         self.antimeridian_cutting = antimeridian_cutting
         self.enforce_poly_winding = enforce_poly_winding
@@ -252,23 +278,38 @@ def fixed_precision(A, prec=6):
     else:
         return round(A, prec)
 
+@_docstring_update(_deserializer_args)
 def fromfile(f, **kw):
+    """ Read a JSON file and return the GeoJSON object.
+    {} """
     d = Deserializer(**kw)
     return d.fromfile(f)
 
+@_docstring_update(_deserializer_args)
 def fromstring(s, **kw):
+    """ Read a JSON string and return the GeoJSON object.
+    {} """
     d = Deserializer(**kw)
     return d.fromstring(s)
 
+@_docstring_update(_deserializer_args)
 def result_fromfile(f, **kw):
+    """ Read a JSON file and return a GeoJSONResult.
+    {} """
     d = Deserializer(**kw)
     return GeoJSONResult(d.fromfile(f))
 
+@_docstring_update(_deserializer_args)
 def result_fromstring(s, **kw):
+    """ Read a JSON string and return a GeoJSONResult.
+    {} """
     d = Deserializer(**kw)
     return GeoJSONResult(d.fromstring(s))
 
+@_docstring_update(_serializer_args)
 def tostring(geom, **kw):
+    """ Serialize *geom* to a JSON string.
+    {} """
     s = Serializer(**kw)
     return s(geom)
 
