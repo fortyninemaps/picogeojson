@@ -4,8 +4,8 @@
 [![Coverage Status](https://coveralls.io/repos/github/fortyninemaps/picogeojson/badge.svg?branch=master)](https://coveralls.io/github/fortyninemaps/picogeojson?branch=master)
 
 Straightforward and compliant GeoJSON parsing and serialization with zero
-dependencies. Easily ingest or output GeoJSON adhering to the
-[IETF proposed standard](https://tools.ietf.org/html/rfc7946).
+dependencies. Easily ingest or output GeoJSON adhering to
+[RFC 7946](https://tools.ietf.org/html/rfc7946).
 
 ## Usage
 
@@ -13,7 +13,7 @@ GeoJSON files or strings are read using `fromfile()` or `fromstring()` (alias
 `loads()`).
 
 ```python
-result = picogeojson.fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}')
+pt = picogeojson.fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}')
 # -> Point(coordinates=[1.0, 3.0])
 ```
 
@@ -26,10 +26,10 @@ accessors for specific GeoJSON types.
 result = picogeojson.result_fromstring(api_response.decode("utf-8"))
 
 # Expecting one or more points or multipoints
-for geom in result:
+for geom in result.points:
     handle_point(geom)
 
-for geom in result.multipoints():
+for geom in result.multipoints:
     handle_multipoint(geom)
 ```
 
