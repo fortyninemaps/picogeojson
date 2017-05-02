@@ -173,43 +173,11 @@ class Serializer(object):
         else:
             return self._geometry_asdict(geom, parent_crs=parent_crs)
 
-    @staticmethod
-    def crsdict(crs=None, urn=None, href="", linktype="proj4"):
-        """ Return a dictionary that can be serialized as a GeoJSON coordinate
-        system mapping using a *urn* or a *crs* instance.
-
-        In the case of a linked CRS, the link address and type can be specified
-        using the `href` and `linktype` keyword arguments.
-
-        For more details, see the GeoJSON specification at:
-        http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
-        """
-        if urn is not None:
-            return {'type': 'name',
-                    'properties': {'name': urn}}
-        elif crs is not None:
-            if hasattr(crs, "jsonhref") and hasattr(crs, "jsontype"):
-                d = {'type': 'link',
-                     'properties': {'href': crs.jsonname,
-                                    'type': crs.jsontype}}
-            elif hasattr(crs, "jsonname"):
-                d = {'type': 'name',
-                     'properties': {'name': crs.jsonname}}
-            else:
-                d = {'type': 'link',
-                     'properties': {'href': href,
-                                    'type': linktype}}
-            return d
-        else:
-            return None
-
     def _geometry_asdict(self, geom, parent_crs=None):
         if geom.crs is not None and geom.crs == parent_crs:
             crs = None
-        elif geom.crs is None or isinstance(geom.crs, dict):
-            crs = geom.crs
         else:
-            crs = self.crsdict(geom.crs)
+            crs = geom.crs
 
         if self.antimeridian_cutting:
             if type(geom).__name__ in ("LineString", "Polygon", "MultiLineString",
