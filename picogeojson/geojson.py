@@ -189,17 +189,19 @@ class Serializer(object):
     def __call__(self, geom, indent=_INDENT):
         return json.dumps(self.geojson_asdict(geom), indent=indent)
 
-    def geojson_asdict(self, geom, parent_crs=None):
+    def geojson_asdict(self, geom, parent_crs=None, write_bbox=None):
+        if write_bbox is None:
+            write_bbox = self.write_bbox
         if isinstance(geom, Feature):
-            return self.feature_asdict(geom, parent_crs=parent_crs)
+            return self.feature_asdict(geom, write_bbox, parent_crs=parent_crs)
         elif isinstance(geom, GeometryCollection):
-            return self.geometry_collection_asdict(geom)
+            return self.geometry_collection_asdict(geom, write_bbox)
         elif isinstance(geom, FeatureCollection):
-            return self.feature_collection_asdict(geom)
+            return self.feature_collection_asdict(geom, write_bbox)
         else:
-            return self._geometry_asdict(geom, parent_crs=parent_crs)
+            return self._geometry_asdict(geom, write_bbox, parent_crs=parent_crs)
 
-    def _geometry_asdict(self, geom, parent_crs=None):
+    def _geometry_asdict(self, geom, write_bbox, parent_crs=None):
         if geom.crs is not None and geom.crs == parent_crs:
             crs = None
         else:
@@ -207,8 +209,8 @@ class Serializer(object):
 
         if self.antimeridian_cutting:
             if type(geom).__name__ in ("LineString", "Polygon", "MultiLineString",
-                                        "MultiPolygon", "GeometryCollection",
-                                        "Feature", "FeatureCollection"):
+                                       "MultiPolygon", "GeometryCollection",
+                                       "Feature", "FeatureCollection"):
                 geom = antimeridian_cut(geom)
 
         d = {"type": type(geom).__name__,
@@ -226,44 +228,52 @@ class Serializer(object):
                         if bool(i) is is_counterclockwise(ring):
                             cx[i] = ring[::-1]
 
-        if self.write_bbox:
+        if write_bbox:
             d["bbox"] = geom_bbox(geom)
 
         if crs is not None:
             d["crs"] = crs
         return d
 
-    def feature_asdict(self, feature, parent_crs=None):
+    def feature_asdict(self, feature, write_bbox=None, parent_crs=None):
+        if write_bbox is None:
+            write_bbox = self.write_bbox
+
         d = {"type": "Feature",
-             "geometry": self.geojson_asdict(feature.geometry, parent_crs=feature.crs),
+             "geometry": self.geojson_asdict(feature.geometry, write_bbox=False, 
+                                             parent_crs=feature.crs),
              "properties": feature.properties}
         if feature.id is not None:
             d["id"] = feature.id
         if feature.crs is not None and feature.crs != parent_crs:
             d["crs"] = feature.crs
 
-        if self.write_bbox:
+        if write_bbox:
             d["bbox"] = feature_bbox(feature)
         return d
 
-    def geometry_collection_asdict(self, coll):
+    def geometry_collection_asdict(self, coll, write_bbox=None):
+        if write_bbox is None:
+            write_bbox = self.write_bbox
+
         d = {"type": "GeometryCollection",
-             "geometries": [self.geojson_asdict(g, parent_crs=coll.crs)
+             "geometries": [self.geojson_asdict(g, write_bbox=False,
+                                                parent_crs=coll.crs)
                             for g in coll.geometries]}
 
-        if self.write_bbox:
+        if write_bbox:
             d["bbox"] = geometry_collection_bbox(coll)
 
         if coll.crs is not None:
             d["crs"] = coll.crs
         return d
 
-    def feature_collection_asdict(self, coll):
+    def feature_collection_asdict(self, coll, write_bbox):
         d = {"type": "FeatureCollection",
-             "features": [self.feature_asdict(f, parent_crs=coll.crs)
+             "features": [self.feature_asdict(f, False, parent_crs=coll.crs)
                           for f in coll.features]}
 
-        if self.write_bbox:
+        if write_bbox:
             d["bbox"] = feature_collection_bbox(coll)
 
         if coll.crs is not None:

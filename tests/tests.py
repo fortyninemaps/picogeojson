@@ -247,6 +247,32 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(d.get("crs", ""), DEFAULTCRS)
         return
 
+    def test_top_bbox_only_geometry_collection(self):
+        collection = picogeojson.GeometryCollection(
+                            [picogeojson.Point((3, 4), None),
+                             picogeojson.Polygon([[(5, 6), (7, 8), (9, 10)]], None),
+                             picogeojson.LineString([(1, 2), (3, 4), (3, 2)], None)],
+                            DEFAULTCRS)
+        s = self.serializer(collection)
+        d = json.loads(s)
+        self.assertFalse(d["geometries"][1].get("bbox", False))
+        self.assertFalse(d["geometries"][2].get("bbox", False))
+        self.assertTrue(d.get("bbox", False) is not False)
+
+    def test_top_bbox_only_feature_collection(self):
+        collection = picogeojson.FeatureCollection(
+                [picogeojson.Feature(picogeojson.Point((7,3), None), {"type": "city"}, None, None),
+                 picogeojson.Feature(picogeojson.LineString([(1,2), (1,3), (2, 2)], None),
+                             {"type": "river"}, None, None),
+                 picogeojson.Feature(picogeojson.Polygon([[(1,2), (1,3), (2, 2), (2, 1)]], None),
+                             {"type": "boundary"}, None, None)],
+                DEFAULTCRS)
+        s = self.serializer(collection)
+        d = json.loads(s)
+        self.assertFalse(d["features"][1]["geometry"].get("bbox", False))
+        self.assertFalse(d["features"][2]["geometry"].get("bbox", False))
+        self.assertTrue(d.get("bbox", False) is not False)
+
     def test_serialize_feature(self):
         feature = picogeojson.Feature(picogeojson.Point((1,2), None), {"type": "city"}, 1, DEFAULTCRS)
         s = self.serializer(feature)
