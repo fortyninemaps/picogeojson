@@ -43,13 +43,13 @@ from .result import GeoJSONResult
 DEFAULTCRS = {"type": "name",
               "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
 
-def _docstring_update(*s):
-    def wrapped(func):
-        func.__doc__ = func.__doc__.format(*s)
-        return func
+def docstring_insert(*s):
+    def wrapped(obj):
+        obj.__doc__ = obj.__doc__.format(*s)
+        return obj
     return wrapped
 
-_deserializer_args = """
+deserializer_args = """
     Parameters
     ----------
 
@@ -61,11 +61,13 @@ _deserializer_args = """
         variable.
     """
 
+@docstring_insert(deserializer_args)
 class Deserializer(object):
     """ Parses GeoJSON strings and returns namedtuples. Strings can be passed
     by file using deserializer.fromfile() or by value using
     deserializer.fromstring().
-    """
+
+    {}"""
     def __init__(self, defaultcrs=None):
         if defaultcrs is None:
             defaultcrs = DEFAULTCRS
@@ -154,7 +156,7 @@ class Deserializer(object):
         else:
             raise TypeError("Unrecognized type {0}".format(t))
 
-_serializer_args = """
+serializer_args = """
     Parameters
     ----------
     antimeridian_cutting : bool
@@ -172,6 +174,7 @@ _serializer_args = """
         Causes geometries and features to have a `bbox` member.
     """
 
+@docstring_insert(serializer_args)
 class Serializer(object):
     """ Class for converting GeoJSON named tuples to GeoJSON.
 
@@ -179,7 +182,8 @@ class Serializer(object):
 
         serializer = GeoJSONSerializer(antimeridian_cutting=True)
         json_string = serializer(named_tuple)
-    """
+
+    {}"""
     def __init__(self, antimeridian_cutting=True, enforce_poly_winding=True, write_bbox=True):
         self.antimeridian_cutting = antimeridian_cutting
         self.enforce_poly_winding = enforce_poly_winding
@@ -192,48 +196,50 @@ class Serializer(object):
     def geojson_asdict(self, geom, parent_crs=None, write_bbox=None):
         if write_bbox is None:
             write_bbox = self.write_bbox
+
         if isinstance(geom, Feature):
             return self.feature_asdict(geom, write_bbox, parent_crs=parent_crs)
+
         elif isinstance(geom, GeometryCollection):
             return self.geometry_collection_asdict(geom, write_bbox)
+
         elif isinstance(geom, FeatureCollection):
             return self.feature_collection_asdict(geom, write_bbox)
-        else:
-            return self._geometry_asdict(geom, write_bbox, parent_crs=parent_crs)
 
-    def _geometry_asdict(self, geom, write_bbox, parent_crs=None):
-        if geom.crs is not None and geom.crs == parent_crs:
-            crs = None
-        else:
-            crs = geom.crs
+        else:   # bare single geometry
+            if geom.crs is not None and geom.crs == parent_crs:
+                crs = None
+            else:
+                crs = geom.crs
 
-        if self.antimeridian_cutting:
-            if type(geom).__name__ in ("LineString", "Polygon", "MultiLineString",
-                                       "MultiPolygon", "GeometryCollection",
-                                       "Feature", "FeatureCollection"):
-                geom = antimeridian_cut(geom)
+            if self.antimeridian_cutting:
+                if type(geom).__name__ in ("LineString", "Polygon",
+                                           "MultiLineString", "MultiPolygon",
+                                           "GeometryCollection", "Feature",
+                                           "FeatureCollection"):
+                    geom = antimeridian_cut(geom)
 
-        d = {"type": type(geom).__name__,
-             "coordinates": geom.coordinates}
+            d = {"type": type(geom).__name__,
+                 "coordinates": geom.coordinates}
 
-        if self.enforce_poly_winding:
-            if type(geom).__name__ == "Polygon":
-                cx = d["coordinates"]
-                for i, ring in enumerate(cx):
-                    if bool(i) is is_counterclockwise(ring):
-                        cx[i] = ring[::-1]
-            elif type(geom).__name__ == "MultiPolygon":
-                for j, cx in enumerate(d["coordinates"]):
+            if self.enforce_poly_winding:
+                if type(geom).__name__ == "Polygon":
+                    cx = d["coordinates"]
                     for i, ring in enumerate(cx):
                         if bool(i) is is_counterclockwise(ring):
                             cx[i] = ring[::-1]
+                elif type(geom).__name__ == "MultiPolygon":
+                    for j, cx in enumerate(d["coordinates"]):
+                        for i, ring in enumerate(cx):
+                            if bool(i) is is_counterclockwise(ring):
+                                cx[i] = ring[::-1]
 
-        if write_bbox:
-            d["bbox"] = geom_bbox(geom)
+            if write_bbox:
+                d["bbox"] = geom_bbox(geom)
 
-        if crs is not None:
-            d["crs"] = crs
-        return d
+            if crs is not None:
+                d["crs"] = crs
+            return d
 
     def feature_asdict(self, feature, write_bbox=None, parent_crs=None):
         if write_bbox is None:
@@ -288,35 +294,35 @@ def fixed_precision(A, prec=6):
     else:
         return round(A, prec)
 
-@_docstring_update(_deserializer_args)
+@docstring_insert(deserializer_args)
 def fromfile(f, **kw):
     """ Read a JSON file and return the GeoJSON object.
     {} """
     d = Deserializer(**kw)
     return d.fromfile(f)
 
-@_docstring_update(_deserializer_args)
+@docstring_insert(deserializer_args)
 def fromstring(s, **kw):
     """ Read a JSON string and return the GeoJSON object.
     {} """
     d = Deserializer(**kw)
     return d.fromstring(s)
 
-@_docstring_update(_deserializer_args)
+@docstring_insert(deserializer_args)
 def result_fromfile(f, **kw):
     """ Read a JSON file and return a GeoJSONResult.
     {} """
     d = Deserializer(**kw)
     return GeoJSONResult(d.fromfile(f))
 
-@_docstring_update(_deserializer_args)
+@docstring_insert(deserializer_args)
 def result_fromstring(s, **kw):
     """ Read a JSON string and return a GeoJSONResult.
     {} """
     d = Deserializer(**kw)
     return GeoJSONResult(d.fromstring(s))
 
-@_docstring_update(_serializer_args)
+@docstring_insert(serializer_args)
 def tostring(geom, **kw):
     """ Serialize *geom* to a JSON string.
     {} """
