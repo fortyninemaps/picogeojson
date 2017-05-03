@@ -27,10 +27,22 @@ result = picogeojson.result_fromstring(api_response.decode("utf-8"))
 
 # Expecting one or more points or multipoints
 for geom in result.points:
-    handle_point(geom)
+    # do something with points
+    # ...
 
-for geom in result.multipoints:
-    handle_multipoint(geom)
+for geom in result.multilinestrings:
+    # do something with multilinestrings
+    # ...
+```
+
+This works for Features too, and we can filter by the `.properties` member.
+
+```python
+result = picogeojson.result_fromstring(api_response.decode("utf-8"))
+
+for feature in result.features("Polygon", {"type": "Lake", "state": "Oregon"}):
+    # do something with lakes in Oregon
+    # ...
 ```
 
 GeoJSON objects may be constructed in Python and composed (`merge()`) or split

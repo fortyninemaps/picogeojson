@@ -43,8 +43,8 @@ picogeojson
 |Build Status| |Coverage Status|
 
 Straightforward and compliant GeoJSON parsing and serialization with
-zero dependencies. Easily ingest or output GeoJSON adhering to the `IETF
-proposed standard <https://tools.ietf.org/html/rfc7946>`__.
+zero dependencies. Easily ingest or output GeoJSON adhering to `RFC
+7946 <https://tools.ietf.org/html/rfc7946>`__.
 
 Usage
 -----
@@ -54,7 +54,7 @@ GeoJSON files or strings are read using ``fromfile()`` or
 
 .. code:: python
 
-    result = picogeojson.fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}')
+    pt = picogeojson.fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}')
     # -> Point(coordinates=[1.0, 3.0])
 
 Sometimes a particular type of GeoJSON object is expected (e.g. from an
@@ -67,11 +67,24 @@ returns an object with safe accessors for specific GeoJSON types.
     result = picogeojson.result_fromstring(api_response.decode("utf-8"))
 
     # Expecting one or more points or multipoints
-    for geom in result:
-        handle_point(geom)
+    for geom in result.points:
+        # do something with points
+        # ...
 
-    for geom in result.multipoints():
-        handle_multipoint(geom)
+    for geom in result.multilinestrings:
+        # do something with multilinestrings
+        # ...
+
+This works for Features too, and we can filter by the ``.properties``
+member.
+
+.. code:: python
+
+    result = picogeojson.result_fromstring(api_response.decode("utf-8"))
+
+    for feature in result.features("Polygon", {"type": "Lake", "state": "Oregon"}):
+        # do something with lakes in Oregon
+        # ...
 
 GeoJSON objects may be constructed in Python and composed (``merge()``)
 or split (``burst()``).

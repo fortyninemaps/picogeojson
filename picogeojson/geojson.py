@@ -45,7 +45,10 @@ DEFAULTCRS = {"type": "name",
 
 def docstring_insert(*s):
     def wrapped(obj):
-        obj.__doc__ = obj.__doc__.format(*s)
+        try:
+            obj.__doc__ = obj.__doc__.format(*s)
+        except AttributeError:
+            pass # class __doc__ attribute not writable in Python 2
         return obj
     return wrapped
 
