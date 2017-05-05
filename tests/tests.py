@@ -171,6 +171,13 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(list(linestring.coordinates), list(d["coordinates"]))
         return
 
+    def test_serialize_polygon_open(self):
+        serializer = Serializer()
+        with self.assertRaises(ValueError):
+            polygon = picogeojson.Polygon([[(0, 0), (0, 1), (1, 1), (1, 0)]])
+            s = serializer(polygon)
+        return
+
     def test_serialize_polygon_reverse(self):
         # serializer may be used to enforce the RFC7946 requirement for CCW
         # external rings
@@ -252,7 +259,7 @@ class SerializerTests(unittest.TestCase):
     def test_top_bbox_only_geometry_collection(self):
         collection = picogeojson.GeometryCollection(
                             [picogeojson.Point((3, 4), None),
-                             picogeojson.Polygon([[(5, 6), (7, 8), (9, 10)]], None),
+                             picogeojson.Polygon([[(5, 6), (7, 8), (9, 10), (5, 6)]], None),
                              picogeojson.LineString([(1, 2), (3, 4), (3, 2)], None)],
                             DEFAULTCRS)
         s = self.serializer(collection)
@@ -266,7 +273,7 @@ class SerializerTests(unittest.TestCase):
                 [picogeojson.Feature(picogeojson.Point((7,3), None), {"type": "city"}, None, None),
                  picogeojson.Feature(picogeojson.LineString([(1,2), (1,3), (2, 2)], None),
                              {"type": "river"}, None, None),
-                 picogeojson.Feature(picogeojson.Polygon([[(1,2), (1,3), (2, 2), (2, 1)]], None),
+                 picogeojson.Feature(picogeojson.Polygon([[(1,2), (1,3), (2, 2), (1, 2)]], None),
                              {"type": "boundary"}, None, None)],
                 DEFAULTCRS)
         s = self.serializer(collection)
@@ -289,7 +296,7 @@ class SerializerTests(unittest.TestCase):
                 [picogeojson.Feature(picogeojson.Point((7,3), None), {"type": "city"}, None, None),
                  picogeojson.Feature(picogeojson.LineString([(1,2), (1,3), (2, 2)], None),
                              {"type": "river"}, None, None),
-                 picogeojson.Feature(picogeojson.Polygon([[(1,2), (1,3), (2, 2), (2, 1)]], None),
+                 picogeojson.Feature(picogeojson.Polygon([[(1,2), (1,3), (2, 2), (2, 1), (1,2)]], None),
                              {"type": "boundary"}, None, None)],
                 DEFAULTCRS)
         s = self.serializer(collection)

@@ -66,6 +66,18 @@ deserializer_args = """
         variable.
     """
 
+def check_closed_ring(geom):
+    if type(geom).__name__ == "Polygon":
+        for ring in geom.coordinates:
+            if tuple(ring[0]) != tuple(ring[-1]):
+                return False
+    elif type(geom).__name__ == "Polygon":
+        for poly in geom.coordinates:
+            for ring in poly:
+                if tuple(ring[0]) != tuple(ring[-1]):
+                    return False
+    return True
+
 @docstring_insert(deserializer_args)
 class Deserializer(object):
     """ Parses GeoJSON strings and returns namedtuples. Strings can be passed
@@ -216,6 +228,11 @@ class Serializer(object):
                 crs = None
             else:
                 crs = geom.crs
+
+
+            if type(geom).__name__ in ("Polygon", "MultiPolygon"):
+                if not check_closed_ring(geom):
+                    raise ValueError("open polygon ring")
 
             if self.antimeridian_cutting:
                 if type(geom).__name__ in ("LineString", "Polygon",
