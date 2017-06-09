@@ -47,6 +47,18 @@ class GeoJSONResult(object):
         return self._geometry_getter("MultiPolygon")
 
     def features(self, geometry_type=None, properties=None):
+        """ Returns a generator for Features matching predicates.
+
+        Parameters
+        ----------
+        geometry_type : str
+            Type of Feature "geometry" member
+        properties : dict
+            Mapping of property to value that return values satisfy
+        """
+        if geometry_type is not None and not isinstance(geometry_type, str):
+            raise TypeError("expected str geometry_type, got {}".format(type(geometry_type)))
+
         objs = [self.obj]
         while len(objs) != 0:
             obj = objs.pop()

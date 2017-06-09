@@ -142,6 +142,11 @@ class ResultTests(unittest.TestCase):
             count += 1
         self.assertEqual(count, 1)
 
+    def test_features_argument_error(self):
+        result = GeoJSONResult(self.featurecollection)
+        with self.assertRaises(TypeError):
+            [a for a in result.features({"style": "stout"})]
+
     def test_get_by_attributes(self):
         result = GeoJSONResult(self.featurecollection)
         count = 0
