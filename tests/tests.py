@@ -1,8 +1,7 @@
-""" Unit tests for vector functions """
-
 import unittest
 import os
 import json
+import io
 
 import picogeojson
 from picogeojson import Serializer, Deserializer, merge, burst, DEFAULTCRS
@@ -150,6 +149,17 @@ class SerializerTests(unittest.TestCase):
         pt = picogeojson.Point((44.0, 17.0), DEFAULTCRS)
         d = json.loads(picogeojson.tostring(pt))
         self.assertEqual(tuple(pt.coordinates), tuple(d["coordinates"]))
+        self.assertEqual(pt.crs, d["crs"])
+
+    def test_shorthand_file(self):
+        pt = picogeojson.Point((44.0, 17.0), DEFAULTCRS)
+        f = io.StringIO()
+        picogeojson.tofile(pt, f)
+        f.seek(0)
+        pt2 = picogeojson.fromfile(f)
+        f.close()
+        self.assertEqual(tuple(pt.coordinates), tuple(pt2.coordinates))
+        self.assertEqual(pt.crs, pt2.crs)
 
     def test_shorthand_compat(self):
         pt = picogeojson.Point((44.0, 17.0), DEFAULTCRS)

@@ -351,6 +351,18 @@ def tostring(geom, **kw):
     s = Serializer(**kw)
     return s(geom)
 
+@docstring_insert(serializer_args)
+def tofile(geom, f, **kw):
+    """ Serialize *geom* to a file.
+    {} """
+    if hasattr(f, "write"):
+        f.write(tostring(geom, **kw))
+    else:
+        with open(f, "w") as fobj:
+            fobj.write(tostring(geom, **kw))
+
 # Aliases for python-geojson compatibility
+load = fromfile
+dump = tofile
 loads = fromstring
 dumps = tostring
