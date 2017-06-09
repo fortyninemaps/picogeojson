@@ -1,7 +1,12 @@
 import unittest
 import os
 import json
-import io
+
+import sys
+if sys.version_info.major >= 3:
+    from io import StringIO
+else:
+    from StringIO import StringIO
 
 import picogeojson
 from picogeojson import Serializer, Deserializer, merge, burst, DEFAULTCRS
@@ -153,7 +158,7 @@ class SerializerTests(unittest.TestCase):
 
     def test_shorthand_file(self):
         pt = picogeojson.Point((44.0, 17.0), DEFAULTCRS)
-        f = io.StringIO()
+        f = StringIO()
         picogeojson.tofile(pt, f)
         f.seek(0)
         pt2 = picogeojson.fromfile(f)
