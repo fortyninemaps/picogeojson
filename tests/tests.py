@@ -11,7 +11,7 @@ else:
 import picogeojson
 from picogeojson import Serializer, Deserializer, merge, burst, DEFAULTCRS
 import picogeojson.bbox as bbox
-from picogeojson.geojson import fixed_precision
+from picogeojson.geojson import fixed_precision, check_closed_ring
 from picogeojson.result import GeoJSONResult
 
 from result_tests import ResultTests
@@ -664,6 +664,34 @@ class MergeBurstTests(unittest.TestCase):
             ], crs=DEFAULTCRS)))
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0].crs, DEFAULTCRS)
+
+class ClosedRingTests(unittest.TestCase):
+
+    def test_check_polygon_ring(self):
+        polygon = picogeojson.Polygon([[(0, 0), (1, 0), (2, 1)]])
+        self.assertFalse(check_closed_ring(polygon))
+
+        polygon = picogeojson.Polygon([[(0, 0), (1, 0), (2, 1), (0, 0)]])
+        self.assertTrue(check_closed_ring(polygon))
+
+    def test_check_polygon_interior_ring(self):
+        polygon = picogeojson.Polygon([[(0, 0), (1, 0), (2, 1), (0, 0)],
+                                       [(0.5,0.5), (0.6,0.5), (0.6,0.7)]])
+        self.assertFalse(check_closed_ring(polygon))
+
+        polygon = picogeojson.Polygon([[(0, 0), (1, 0), (2, 1), (0, 0)],
+                                       [(0.5,0.5), (0.6,0.5), (0.6,0.7), (0.5,0.5)]])
+        self.assertTrue(check_closed_ring(polygon))
+
+    def test_check_multipolygon_ring(self):
+        polygon = picogeojson.MultiPolygon([[[(0, 0), (1, 0), (2, 1)]],
+                                            [[(-4,-4), (5,-6), (2,10), (-4,-4)]]])
+        self.assertFalse(check_closed_ring(polygon))
+
+        polygon = picogeojson.MultiPolygon([[[(0, 0), (1, 0), (2, 1), (0, 0)]],
+                                            [[(-4,-4), (5,-6), (2,10), (-4,-4)]]])
+        self.assertTrue(check_closed_ring(polygon))
+
 
 if __name__ == "__main__":
     unittest.main()
