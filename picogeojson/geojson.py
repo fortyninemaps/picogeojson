@@ -20,16 +20,15 @@ The functions above use the lower-level classes
 """
 
 import os
-_INDENT = None
-if os.environ.get("PICOGEOJSON_PYJSON", "0") == "1":
-    print("Using 'json' module because PICOGEOJSON_PYJSON is set")
+import copy
+
+try:
+    assert os.environ.get("PICOGEOJSON_PYJSON", "0") == "1"
+    import ujson as json
+    _INDENT = 0
+except (AssertionError, ImportError):
     import json
-else:
-    try:
-        import ujson as json
-        _INDENT = 0
-    except ImportError:
-        import json
+    _INDENT = None
 
 from .types import (Point, LineString, Polygon,
                     MultiPoint, MultiLineString, MultiPolygon,
@@ -71,7 +70,7 @@ def check_closed_ring(geom):
         for ring in geom.coordinates:
             if tuple(ring[0]) != tuple(ring[-1]):
                 return False
-    elif type(geom).__name__ == "Polygon":
+    elif type(geom).__name__ == "MultiPolygon":
         for poly in geom.coordinates:
             for ring in poly:
                 if tuple(ring[0]) != tuple(ring[-1]):
@@ -256,15 +255,17 @@ class Serializer(object):
 
             if self.enforce_poly_winding:
                 if type(geom).__name__ == "Polygon":
+                    d["coordinates"] = copy.deepcopy(d["coordinates"])
                     cx = d["coordinates"]
                     for i, ring in enumerate(cx):
                         if bool(i) is is_counterclockwise(ring):
                             cx[i] = ring[::-1]
                 elif type(geom).__name__ == "MultiPolygon":
+                    d["coordinates"] = copy.deepcopy(d["coordinates"])
                     for j, cx in enumerate(d["coordinates"]):
                         for i, ring in enumerate(cx):
                             if bool(i) is is_counterclockwise(ring):
-                                cx[i] = ring[::-1]
+                                d["coordinates"][j][i] = ring[::-1]
 
             if root and self.write_bbox:
                 d["bbox"] = geom_bbox(geom)
