@@ -179,16 +179,19 @@ serializer_args = """
     antimeridian_cutting : bool
         Indicates whether geometries spanning the dateline should be split,
         possibly changing type in the process (e.g. LineString to
-        MultiLineString)
+        MultiLineString) (default True).
 
     enforce_poly_winding:
         Ensures that serialized Polygon and MultiPolygon instances have
         counterclockwise external boundaries and clockwise internal boundaries
         (holes). Note that some visualization backends (notably SVG and HTML
-        Canvas) take the opposing convention.
+        Canvas) take the opposing convention (default True).
 
     write_bbox : bool
-        Causes geometries and features to have a `bbox` member.
+        Causes geometries and features to have a `bbox` member (default True).
+
+    write_crs : bool
+        Causes geometries and features to have a `crs` member (default False).
     """
 
 @docstring_insert(serializer_args)
@@ -201,34 +204,29 @@ class Serializer(object):
         json_string = serializer(named_tuple)
 
     {}"""
-    def __init__(self, antimeridian_cutting=True, enforce_poly_winding=True, write_bbox=True):
+    def __init__(self, antimeridian_cutting=True, enforce_poly_winding=True,
+                 write_bbox=True, write_crs=False):
         self.antimeridian_cutting = antimeridian_cutting
         self.enforce_poly_winding = enforce_poly_winding
         self.write_bbox = write_bbox
+        self.write_crs = write_crs
         return
 
     def __call__(self, geom, indent=_INDENT):
         return json.dumps(self.geojson_asdict(geom), indent=indent)
 
-    def geojson_asdict(self, geom, parent_crs=None, write_bbox=None):
-        if write_bbox is None:
-            write_bbox = self.write_bbox
+    def geojson_asdict(self, geom, root=True):
 
         if isinstance(geom, Feature):
-            return self.feature_asdict(geom, write_bbox, parent_crs=parent_crs)
+            return self.feature_asdict(geom, root=True)
 
         elif isinstance(geom, GeometryCollection):
-            return self.geometry_collection_asdict(geom, write_bbox)
+            return self.geometry_collection_asdict(geom, root=True)
 
         elif isinstance(geom, FeatureCollection):
-            return self.feature_collection_asdict(geom, write_bbox)
+            return self.feature_collection_asdict(geom, root=True)
 
         else:   # bare single geometry
-            if geom.crs is not None and geom.crs == parent_crs:
-                crs = None
-            else:
-                crs = geom.crs
-
 
             if type(geom).__name__ in ("Polygon", "MultiPolygon"):
                 if not check_closed_ring(geom):
@@ -256,55 +254,48 @@ class Serializer(object):
                             if bool(i) is is_counterclockwise(ring):
                                 cx[i] = ring[::-1]
 
-            if write_bbox:
+            if root and self.write_bbox:
                 d["bbox"] = geom_bbox(geom)
 
-            if crs is not None:
-                d["crs"] = crs
+            if root and self.write_crs and (geom.crs is not None):
+                d["crs"] = geom.crs
             return d
 
-    def feature_asdict(self, feature, write_bbox=None, parent_crs=None):
-        if write_bbox is None:
-            write_bbox = self.write_bbox
-
+    def feature_asdict(self, feature, root=True):
         d = {"type": "Feature",
-             "geometry": self.geojson_asdict(feature.geometry, write_bbox=False, 
-                                             parent_crs=feature.crs),
+             "geometry": self.geojson_asdict(feature.geometry, root=False),
              "properties": feature.properties}
+
         if feature.id is not None:
             d["id"] = feature.id
-        if feature.crs is not None and feature.crs != parent_crs:
-            d["crs"] = feature.crs
 
-        if write_bbox:
+        if root and self.write_bbox:
             d["bbox"] = feature_bbox(feature)
+
+        if root and self.write_crs and (feature.crs is not None):
+            d["crs"] = feature.crs
         return d
 
-    def geometry_collection_asdict(self, coll, write_bbox=None):
-        if write_bbox is None:
-            write_bbox = self.write_bbox
-
+    def geometry_collection_asdict(self, coll, root=True):
         d = {"type": "GeometryCollection",
-             "geometries": [self.geojson_asdict(g, write_bbox=False,
-                                                parent_crs=coll.crs)
+             "geometries": [self.geojson_asdict(g, root=False)
                             for g in coll.geometries]}
 
-        if write_bbox:
+        if root and self.write_bbox:
             d["bbox"] = geometry_collection_bbox(coll)
 
-        if coll.crs is not None:
+        if root and self.write_crs and (coll.crs is not None):
             d["crs"] = coll.crs
         return d
 
-    def feature_collection_asdict(self, coll, write_bbox):
+    def feature_collection_asdict(self, coll, root=True):
         d = {"type": "FeatureCollection",
-             "features": [self.feature_asdict(f, False, parent_crs=coll.crs)
-                          for f in coll.features]}
+             "features": [self.feature_asdict(f, root=False) for f in coll.features]}
 
-        if write_bbox:
+        if self.write_bbox:
             d["bbox"] = feature_collection_bbox(coll)
 
-        if coll.crs is not None:
+        if root and self.write_crs and (coll.crs is not None):
             d["crs"] = coll.crs
         return d
 

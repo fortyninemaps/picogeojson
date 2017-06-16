@@ -147,13 +147,16 @@ class DeserializerTests(unittest.TestCase):
 class SerializerTests(unittest.TestCase):
 
     def setUp(self):
-        self.serializer = Serializer()
+        self.serializer = Serializer(write_crs=True)
         return
 
     def test_shorthand(self):
         pt = picogeojson.Point((44.0, 17.0), DEFAULTCRS)
         d = json.loads(picogeojson.tostring(pt))
         self.assertEqual(tuple(pt.coordinates), tuple(d["coordinates"]))
+        self.assertTrue("crs" not in d)
+
+        d = json.loads(picogeojson.tostring(pt, write_crs=True))
         self.assertEqual(pt.crs, d["crs"])
 
     def test_shorthand_file(self):
