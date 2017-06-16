@@ -85,7 +85,8 @@ class Deserializer(object):
     deserializer.fromstring().
 
     {}"""
-    def __init__(self, defaultcrs=None):
+    def __init__(self, enforce_poly_winding=True, defaultcrs=None):
+        self.enforce_poly_winding = enforce_poly_winding
         if defaultcrs is None:
             defaultcrs = DEFAULTCRS
         self.defaultcrs = defaultcrs
@@ -127,11 +128,22 @@ class Deserializer(object):
 
     def _parsePolygon(self, d):
         crs = d.get("crs", self.defaultcrs)
-        return Polygon(d["coordinates"], crs)
+        geom = Polygon(d["coordinates"], crs)
+        if self.enforce_poly_winding:
+            for i, ring in enumerate(geom.coordinates):
+                if bool(i) is is_counterclockwise(ring):
+                    geom.coordinates[i] = ring[::-1]
+        return geom
 
     def _parseMultiPolygon(self, d):
         crs = d.get("crs", self.defaultcrs)
-        return MultiPolygon(d["coordinates"], crs)
+        geom = MultiPolygon(d["coordinates"], crs)
+        if self.enforce_poly_winding:
+            for j, coords in enumerate(geom.coordinates):
+                for i, ring in enumerate(coords):
+                    if bool(i) is is_counterclockwise(ring):
+                        geom.coordinates[j][i] = ring[::-1]
+        return geom
 
     def _parseGeometryCollection(self, o):
         crs = o.get("crs", self.defaultcrs)

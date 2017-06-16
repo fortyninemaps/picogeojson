@@ -106,7 +106,7 @@ class DeserializerTests(unittest.TestCase):
         self.assertEqual(res.coordinates,
             [[[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
              [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
-             [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]])
+              [[100.2, 0.2], [100.2, 0.8], [100.8, 0.8], [100.8, 0.2], [100.2, 0.2]]]])
         return
 
     def test_geometrycollection_read(self):
@@ -260,6 +260,17 @@ class SerializerTests(unittest.TestCase):
         s = self.serializer(multipolygon)
         d = json.loads(s)
         self.assertEqual(list(multipolygon.coordinates), list(d["coordinates"]))
+        return
+
+    def test_serialize_multipolygon_reverse(self):
+        multipolygon = picogeojson.MultiPolygon(
+                            [[[[0.0, 0.0], [2.0, 0.0], [1, 2.0]]],
+                             [[[0.0, 0.0], [-2.0, 0.0], [-1.0, 2.0]]]],
+                            DEFAULTCRS)
+        s = self.serializer(multipolygon)
+        d = json.loads(s)
+        self.assertEqual(list(multipolygon.coordinates[0]), list(d["coordinates"][0]))
+        self.assertEqual(list(multipolygon.coordinates[1]), list(d["coordinates"][1][::-1]))
         return
 
     def test_serialize_geometrycollection(self):
