@@ -207,14 +207,14 @@ class SerializerTests(unittest.TestCase):
         serializer = Serializer(enforce_poly_winding=False)
         polygon = picogeojson.Polygon([[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]])
         s = serializer(polygon)
-        d_cc = json.loads(s)
+        d_cw = json.loads(s)
 
-        self.assertEqual(d_ccw["coordinates"][0], d_cc["coordinates"][0][::-1])
+        self.assertEqual(d_ccw["coordinates"][0], d_cw["coordinates"][0][::-1])
         return
 
     def test_serialize_polygon(self):
         polygon = picogeojson.Polygon([[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0], [44.0, 17.0]],
-                                       [[1.0, 1.0], [0.5, -0.5], [0.8, -0.7], [1.0, 1.0]]],
+                                       [[1.0, 1.0], [0.8, -0.7], [0.5, -0.5], [1.0, 1.0]]],
                                       DEFAULTCRS)
         s = self.serializer(polygon)
         d = json.loads(s)
@@ -250,13 +250,30 @@ class SerializerTests(unittest.TestCase):
 
     def test_serialize_multipolygon(self):
         multipolygon = picogeojson.MultiPolygon(
-                            [[[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
-                              [[1.0, 1.0], [0.5, -0.5], [0.8, -0.7]]],
-                             [[[49.0, -3.0], [48.0, -2.5], [2.9, -16.0]]]],
+                            [[[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0], [44.0, 17.0]],
+                              [[1.0, 1.0], [0.8, -0.7], [0.5, -0.5], [1.0, 1.0]]],
+                             [[[49.0, -3.0], [48.0, -2.5], [2.9, -16.0], [49.0, -3.0]]]],
                             DEFAULTCRS)
         s = self.serializer(multipolygon)
         d = json.loads(s)
         self.assertEqual(list(multipolygon.coordinates), list(d["coordinates"]))
+        return
+
+    def test_serialize_multipolygon_reverse(self):
+        multipolygon = picogeojson.MultiPolygon(
+                            [[[[0.0, 0.0], [2.0, 0.0], [1, 2.0], [0.0, 0.0]]],
+                             [[[0.0, 0.0], [-2.0, 0.0], [-1.0, 2.0], [0.0, 0.0]]]],
+                            DEFAULTCRS)
+
+        serializer = Serializer(enforce_poly_winding=True)
+        s = serializer(multipolygon)
+        d_ccw = json.loads(s)
+
+        serializer = Serializer(enforce_poly_winding=False)
+        s = serializer(multipolygon)
+        d_cw = json.loads(s)
+
+        self.assertEqual(d_cw["coordinates"][1][0], d_ccw["coordinates"][1][0][::-1])
         return
 
     def test_serialize_geometrycollection(self):
