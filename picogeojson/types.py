@@ -51,6 +51,7 @@ class FeatureCollection(object):
 def merge(items):
     """ Combine a list of GeoJSON types into the single most specific type that
     retains all information. """
+    items = list(items)
     t0 = type(items[0]).__name__
     if all(type(g).__name__ == t0 for g in items[1:]):
         if items[0].crs is None and any(it.crs is not None for it in items[1:]):
@@ -87,48 +88,37 @@ def merge(items):
     else:
         raise TypeError("no rule to merge {}".format(set(type(g).__name__ for g in items)))
 
-def _set_crs(items, crs):
-    for item in items:
-        item.crs = crs
-    return items
-
-def burst(item, crs=None):
-    """ Break a composite GeoJSON type into atomic Points, LineStrings,
-    Polygons, or Features. """
+def burst(item):
+    """ Generator that breaks a composite GeoJSON type into atomic Points,
+    LineStrings, Polygons, or Features. """
     if type(item).__name__ == "GeometryCollection":
         geometries = []
         for geometry in item.geometries:
-            geometries.extend(burst(geometry, crs=item.crs))
-        return geometries
+            for subgeometry in burst(geometry):
+                subgeometry.crs = item.crs
+                yield subgeometry
 
     elif type(item).__name__ == "FeatureCollection":
-        features = [feature for feature in item.features]
-        if item.crs is not None:
-            for feature in features:
+        for feature in item.features:
+            if item.crs is not None:
                 feature.crs = item.crs
-        return features
+            yield feature
 
     elif type(item).__name__ == "MultiPoint":
-        geometries = [Point(coords, crs=item.crs) for coords in item.coordinates]
-        if crs is not None:
-            _set_crs(geometries, crs)
-        return geometries
+        for coords in item.coordinates:
+            pt = Point(coords, crs=item.crs)
+            yield pt
 
     elif type(item).__name__ == "MultiLineString":
-        geometries = [LineString(coords, crs=item.crs) for coords in item.coordinates]
-        if crs is not None:
-            _set_crs(geometries, crs)
-        return geometries
+        for coords in item.coordinates:
+            geom = LineString(coords, crs=item.crs)
+            yield geom
 
     elif type(item).__name__ == "MultiPolygon":
-        geometries = [Polygon(coords, crs=item.crs) for coords in item.coordinates]
-        if crs is not None:
-            _set_crs(geometries, crs)
-        return geometries
+        for coords in item.coordinates:
+            geom = Polygon(coords, crs=item.crs)
+            yield geom
 
     else:
-        geometries = [item]
-        if crs is not None:
-            _set_crs(geometries, crs)
-        return geometries
+        yield item
 

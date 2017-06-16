@@ -603,45 +603,45 @@ class MergeBurstTests(unittest.TestCase):
         self.assertEqual(len(merged.features), 4)
 
     def test_burst_multipoint(self):
-        result = burst(picogeojson.MultiPoint([(1, 2), (3, 4), (5, 6)]))
+        result = list(burst(picogeojson.MultiPoint([(1, 2), (3, 4), (5, 6)])))
         self.assertEqual(len(result), 3)
         self.assertEqual(type(result[0]).__name__, "Point")
         self.assertEqual(type(result[1]).__name__, "Point")
         self.assertEqual(type(result[2]).__name__, "Point")
 
     def test_burst_point(self):
-        result = burst(picogeojson.Point((1, 2)))
+        result = list(burst(picogeojson.Point((1, 2))))
         self.assertEqual(len(result), 1)
         self.assertEqual(type(result[0]).__name__, "Point")
 
     def test_burst_geometrycollection(self):
-        result = burst(picogeojson.GeometryCollection([
+        result = list(burst(picogeojson.GeometryCollection([
             picogeojson.Point(1, 2),
             picogeojson.LineString([(3, 4), (5, 6), (7, 6)]),
             picogeojson.Polygon([[(1, 1), (2, 2), (2, 3), (1, 2)]]),
             picogeojson.MultiLineString([[(0, 0), (0, 1), (1, 1)],
                                          [(0, 0), (1, 0), (1, 1)]])
-            ], crs=DEFAULTCRS))
+            ], crs=DEFAULTCRS)))
         self.assertEqual(len(result), 5)
         self.assertEqual(result[0].crs, DEFAULTCRS)
 
     def test_burst_multipolygon(self):
-        result = burst(picogeojson.MultiPolygon([
+        result = list(burst(picogeojson.MultiPolygon([
                                     [[(1, 2), (2, 3), (1, 3)]],
                                     [[(1, 2), (-2, -3), (-1, -3)]]],
-                                    crs=DEFAULTCRS))
+                                    crs=DEFAULTCRS)))
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0].crs, DEFAULTCRS)
 
     def test_burst_feature_collection(self):
-        result = burst(picogeojson.FeatureCollection([
+        result = list(burst(picogeojson.FeatureCollection([
             picogeojson.Feature(picogeojson.Point((1, 2)),
                                 properties={"desc": "a point"}),
             picogeojson.Feature(picogeojson.MultiPolygon([
                                     [[(1, 2), (2, 3), (1, 3)]],
                                     [[(1, 2), (-2, -3), (-1, -3)]]]),
                                 properties={"desc": "some triangles"})
-            ], crs=DEFAULTCRS))
+            ], crs=DEFAULTCRS)))
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0].crs, DEFAULTCRS)
 
