@@ -7,7 +7,7 @@ from .types import (Point, LineString, Polygon,
 
 from .geojson import (Serializer, Deserializer,
                       DEFAULTCRS,
-                      fromfile, fromstring, tofile, tostring,
+                      fromfile, fromstring, fromdict, tofile, tostring, todict,
                       load, dump, loads, dumps,
                       result_fromstring, result_fromfile)
 

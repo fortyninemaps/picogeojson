@@ -29,6 +29,23 @@ class DeserializerTests(unittest.TestCase):
         self.assertEqual(res.coordinates, [100.0, 0.0])
         return
 
+    def test_fromdict(self):
+        d = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]]
+                },
+                "properties": {
+                    "cover": "water",
+                    "color": "blue"
+                }
+        }
+        geom = picogeojson.fromdict(d)
+        self.assertEqual(d["geometry"]["coordinates"], geom.geometry.coordinates)
+        self.assertEqual(d["properties"], geom.properties)
+        return
+
     def test_shorthand_result(self):
         res = picogeojson.result_fromfile(os.path.join(TESTDATA, 'point.json'))
         self.assertEqual(type(res), GeoJSONResult)
@@ -173,6 +190,18 @@ class SerializerTests(unittest.TestCase):
         pt = picogeojson.Point((44.0, 17.0), DEFAULTCRS)
         d = json.loads(picogeojson.dumps(pt))
         self.assertEqual(tuple(pt.coordinates), tuple(d["coordinates"]))
+
+    def test_todict(self):
+        geom = picogeojson.Feature(picogeojson.Polygon([[(0, 0), (1, 0),
+                                                         (1, 1), (0, 1),
+                                                         (0, 0)]]),
+                                   {"cover": "water", "color": "blue"})
+
+        d = picogeojson.todict(geom)
+        self.assertEqual(d["geometry"]["coordinates"], geom.geometry.coordinates)
+        self.assertEqual(d["properties"], geom.properties)
+        return
+
 
     def test_serialize_point(self):
         pt = picogeojson.Point((44.0, 17.0), DEFAULTCRS)

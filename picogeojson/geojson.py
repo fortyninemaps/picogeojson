@@ -127,7 +127,7 @@ class Deserializer(object):
 
     def _parsePolygon(self, d):
         crs = d.get("crs", self.defaultcrs)
-        geom = Polygon(d["coordinates"], crs)
+        geom = Polygon(copy.copy(d["coordinates"]), crs)
         if self.enforce_poly_winding:
             for i, ring in enumerate(geom.coordinates):
                 if bool(i) is is_counterclockwise(ring):
@@ -136,7 +136,7 @@ class Deserializer(object):
 
     def _parseMultiPolygon(self, d):
         crs = d.get("crs", self.defaultcrs)
-        geom = MultiPolygon(d["coordinates"], crs)
+        geom = MultiPolygon(copy.deepcopy(d["coordinates"]), crs)
         if self.enforce_poly_winding:
             for j, coords in enumerate(geom.coordinates):
                 for i, ring in enumerate(coords):
@@ -255,7 +255,7 @@ class Serializer(object):
 
             if self.enforce_poly_winding:
                 if type(geom).__name__ == "Polygon":
-                    d["coordinates"] = copy.deepcopy(d["coordinates"])
+                    d["coordinates"] = copy.copy(d["coordinates"])
                     cx = d["coordinates"]
                     for i, ring in enumerate(cx):
                         if bool(i) is is_counterclockwise(ring):
@@ -321,6 +321,13 @@ def fixed_precision(A, prec=6):
         return round(A, prec)
 
 @docstring_insert(deserializer_args)
+def fromdict(dct, **kw):
+    """ Read a dictionary and return the GeoJSON object.
+    {} """
+    d = Deserializer(**kw)
+    return d.deserialize(dct)
+
+@docstring_insert(deserializer_args)
 def fromfile(f, **kw):
     """ Read a JSON file and return the GeoJSON object.
     {} """
@@ -347,6 +354,13 @@ def result_fromstring(s, **kw):
     {} """
     d = Deserializer(**kw)
     return GeoJSONResult(d.fromstring(s))
+
+@docstring_insert(serializer_args)
+def todict(geom, **kw):
+    """ Serialize *geom* to a dictionary.
+    {} """
+    s = Serializer(**kw)
+    return s.geojson_asdict(geom)
 
 @docstring_insert(serializer_args)
 def tostring(geom, **kw):
