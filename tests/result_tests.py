@@ -11,14 +11,14 @@ class ResultTests(unittest.TestCase):
         self.geometrycollection = \
                 GeometryCollection(
                     [Point((1, 2)),
-                     Polygon([[]]),
+                     Polygon([[(10, 10), (10, 11), (9, 11), (9, 10), (10, 10)]]),
                      LineString([(1, 1), (2, 2), (3, 3)]),
                      GeometryCollection(
                          [Point((3, 4)),
                           MultiPolygon([[[[],[]], [[]]], [[[],[]]], [[[],[],[]]]]),
                           Point((5, 6)),
                           LineString([(1, 1), (2, 2), (3, 3)]),
-                          Polygon([[]])],
+                          Polygon([[(1, 1), (0, 2), (-1, 1), (1, 0), (1, 1)]])],
                          DEFAULTCRS),
                      MultiPoint([(7, 8), (9, 10)]),
                      LineString([(1, 1), (2, 2), (3, 3)]),
@@ -35,7 +35,7 @@ class ResultTests(unittest.TestCase):
             Feature(Point((-1, -2)), {"style": "stout"}),
             Feature(MultiPolygon([[[[],[]], [[]]], [[[],[]]], [[[],[],[]]]]), {"style": "stout"}),
             Feature(LineString([(-1, -2), (-3, -4), (-5, -3)]), {"style": "lager"}),
-            Feature(Polygon([[(-1, -2), (-3, -4), (-5, -3)]]), {"style": "saison"}),
+            Feature(Polygon([[(-1, -2), (-3, -4), (-5, -3), (-1, -2)]]), {"style": "saison"}),
             Feature(MultiPoint([(-1, -2), (-3, -4), (-5, -3)]), {"style": "kolsch"}),
             Feature(MultiLineString([[[],[],[]], [[],[],[]]]), {}),
         ], DEFAULTCRS)

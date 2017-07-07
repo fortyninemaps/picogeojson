@@ -65,18 +65,6 @@ deserializer_args = """
         variable.
     """
 
-def check_closed_ring(geom):
-    if type(geom).__name__ == "Polygon":
-        for ring in geom.coordinates:
-            if tuple(ring[0]) != tuple(ring[-1]):
-                return False
-    elif type(geom).__name__ == "MultiPolygon":
-        for poly in geom.coordinates:
-            for ring in poly:
-                if tuple(ring[0]) != tuple(ring[-1]):
-                    return False
-    return True
-
 @docstring_insert(deserializer_args)
 class Deserializer(object):
     """ Parses GeoJSON strings and returns namedtuples. Strings can be passed
@@ -127,22 +115,29 @@ class Deserializer(object):
 
     def _parsePolygon(self, d):
         crs = d.get("crs", self.defaultcrs)
-        geom = Polygon(copy.copy(d["coordinates"]), crs)
+        coords = copy.copy(d["coordinates"])
+        for i, ring in enumerate(coords):
+            if ring[0] != ring[-1]:
+                ring.append(ring[0])
         if self.enforce_poly_winding:
-            for i, ring in enumerate(geom.coordinates):
+            for i, ring in enumerate(coords):
                 if bool(i) is is_counterclockwise(ring):
-                    geom.coordinates[i] = ring[::-1]
-        return geom
+                    coords[i] = ring[::-1]
+        return Polygon(coords, crs)
 
     def _parseMultiPolygon(self, d):
         crs = d.get("crs", self.defaultcrs)
-        geom = MultiPolygon(copy.deepcopy(d["coordinates"]), crs)
+        coords = copy.deepcopy(d["coordinates"])
+        for j, polygon in enumerate(coords):
+            for i, ring in enumerate(polygon):
+                if ring[0] != ring[-1]:
+                    ring.append(ring[0])
         if self.enforce_poly_winding:
-            for j, coords in enumerate(geom.coordinates):
-                for i, ring in enumerate(coords):
+            for j, polygon in enumerate(coords):
+                for i, ring in enumerate(polygon):
                     if bool(i) is is_counterclockwise(ring):
-                        geom.coordinates[j][i] = ring[::-1]
-        return geom
+                        coords[j][i] = ring[::-1]
+        return MultiPolygon(coords, crs)
 
     def _parseGeometryCollection(self, o):
         crs = o.get("crs", self.defaultcrs)
@@ -238,10 +233,6 @@ class Serializer(object):
             return self.feature_collection_asdict(geom, root=True)
 
         else:   # bare single geometry
-
-            if type(geom).__name__ in ("Polygon", "MultiPolygon"):
-                if not check_closed_ring(geom):
-                    raise ValueError("open polygon ring")
 
             if self.antimeridian_cutting:
                 if type(geom).__name__ in ("LineString", "Polygon",
