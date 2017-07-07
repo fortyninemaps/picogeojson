@@ -8,45 +8,45 @@ class Point(object):
 
 @attr.s(cmp=False, slots=True)
 class MultiPoint(object):
-    coordinates = attr.ib()
-    crs = attr.ib(default=None)
+    coordinates = attr.ib(repr=False)
+    crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
 class LineString(object):
-    coordinates = attr.ib()
-    crs = attr.ib(default=None)
+    coordinates = attr.ib(repr=False)
+    crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
 class MultiLineString(object):
-    coordinates = attr.ib()
-    crs = attr.ib(default=None)
+    coordinates = attr.ib(repr=False)
+    crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
 class Polygon(object):
-    coordinates = attr.ib()
-    crs = attr.ib(default=None)
+    coordinates = attr.ib(repr=False)
+    crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
 class MultiPolygon(object):
-    coordinates = attr.ib()
-    crs = attr.ib(default=None)
+    coordinates = attr.ib(repr=False)
+    crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
 class GeometryCollection(object):
     geometries = attr.ib()
-    crs = attr.ib(default=None)
+    crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
 class Feature(object):
     geometry = attr.ib()
     properties = attr.ib()
-    id = attr.ib(default=None)
-    crs = attr.ib(default=None)
+    id = attr.ib(default=None, repr=False)
+    crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
 class FeatureCollection(object):
     features = attr.ib()
-    crs = attr.ib(default=None)
+    crs = attr.ib(default=None, repr=False)
 
 def merge(items):
     """ Combine a list of GeoJSON types into the single most specific type that
