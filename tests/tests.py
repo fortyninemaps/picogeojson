@@ -14,6 +14,7 @@ import picogeojson.bbox as bbox
 from picogeojson.geojson import fixed_precision
 from picogeojson.result import GeoJSONResult
 
+from type_tests import ClosedRingTests, InvalidCoordTests
 from result_tests import ResultTests
 
 TESTDATA = "tests/"
@@ -681,37 +682,6 @@ class MergeBurstTests(unittest.TestCase):
             ], crs=DEFAULTCRS)))
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0].crs, DEFAULTCRS)
-
-class ClosedRingTests(unittest.TestCase):
-
-    def assertClosed(self, geom):
-        if type(geom).__name__ == "Polygon":
-            for ring in geom.coordinates:
-                if tuple(ring[0]) != tuple(ring[-1]):
-                    self.fail()
-        elif type(geom).__name__ == "MultiPolygon":
-            for poly in geom.coordinates:
-                for ring in poly:
-                    if tuple(ring[0]) != tuple(ring[-1]):
-                        self.fail()
-
-    def test_check_polygon_ring(self):
-        polygon = pico.loads("""{"type": "Polygon",
-            "coordinates": [[[0, 0], [1, 0], [2, 1]]]}""")
-        self.assertClosed(polygon)
-
-    def test_check_polygon_interior_ring(self):
-        polygon = pico.loads("""{"type": "Polygon",
-            "coordinates": [[[0, 0], [1, 0], [2, 1], [0, 0]],
-                            [[0.5,0.5], [0.6,0.5], [0.6,0.7]]]}""")
-        self.assertClosed(polygon)
-
-    def test_check_multipolygon_ring(self):
-
-        geom = pico.loads("""{"type": "MultiPolygon",
-            "coordinates": [[[[0, 0], [1, 0], [2, 1]]],
-                            [[[-4,-4], [5,-6], [2, 10]]]]}""")
-        self.assertClosed(geom)
 
 if __name__ == "__main__":
     unittest.main()

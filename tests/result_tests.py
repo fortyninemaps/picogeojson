@@ -56,7 +56,8 @@ class ResultTests(unittest.TestCase):
                     {"style": "saison"}),
             Feature(MultiPoint([(-1, -2), (-3, -4), (-5, -3)]),
                     {"style": "kolsch"}),
-            Feature(MultiLineString([[[(0, 0), (1, 1), (2, 3)]], [(5, 6), (1, 3), (4, 7)]]),
+            Feature(MultiLineString([[(0, 0), (1, 1), (2, 3)],
+                                     [(5, 6), (1, 3), (4, 7)]]),
                     {"style": "pilsner"}),
         ], DEFAULTCRS)
 
