@@ -1,9 +1,31 @@
 import itertools
 import attr
 
+def as_nested_lists(obj):
+    """ Convert all but the lowest level of iterables to lists """
+    if not hasattr(obj, "__getitem__") or not hasattr(obj[0], "__getitem__"):
+        return obj
+    else:
+        return [as_nested_lists(a) for a in obj]
+
+def close_rings_inplace(obj):
+    if hasattr(obj, "__getitem__") and hasattr(obj[0], "__getitem__"):
+        if hasattr(obj[0][0], "__getitem__"):
+            # obj contains rings
+            for part in obj:
+                close_rings_inplace(part)
+        else:
+            # obj is a ring
+            if obj[0] != obj[-1]:
+                obj.append(obj[0])
+    return obj
+
+def as_closed_lists(obj):
+    return close_rings_inplace(as_nested_lists(obj))
+
 # Point
 def depth1(cls, attribute, value):
-    if not hasattr(value, "__getitem__"):
+    if not hasattr(value, "__getitem__") or hasattr(value[0], "__getitem__"):
         raise TypeError("require 1-dimensional coordinate list")
 
 # LineString
@@ -21,15 +43,6 @@ def depth4(cls, attribute, value):
     if not (depth3 and hasattr(value[0][0][0], "__getitem__")):
         raise TypeError("require 4-dimensional coordinate list")
 
-def closed3(cls, attribute, value):
-    for ring in value:
-        if ring[0] != ring[-1]:
-            raise ValueError("polygon ring not closed")
-
-def closed4(cls, attribute, value):
-    for polygon in value:
-        closed3(cls, attribute, polygon)
-
 @attr.s(cmp=False, slots=True)
 class Point(object):
     coordinates = attr.ib(validator=depth1)
@@ -37,27 +50,27 @@ class Point(object):
 
 @attr.s(cmp=False, slots=True)
 class MultiPoint(object):
-    coordinates = attr.ib(repr=False, validator=depth2)
+    coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=depth2)
     crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
 class LineString(object):
-    coordinates = attr.ib(repr=False, validator=depth2)
+    coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=depth2)
     crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
 class MultiLineString(object):
-    coordinates = attr.ib(repr=False, validator=depth3)
+    coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=depth3)
     crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
 class Polygon(object):
-    coordinates = attr.ib(repr=False, validator=[depth3, closed3])
+    coordinates = attr.ib(repr=False, convert=as_closed_lists, validator=depth3)
     crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
 class MultiPolygon(object):
-    coordinates = attr.ib(repr=False, validator=[depth3, closed4])
+    coordinates = attr.ib(repr=False, convert=as_closed_lists, validator=depth4)
     crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
