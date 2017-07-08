@@ -35,8 +35,8 @@ from .types import (Point, LineString, Polygon,
                     GeometryCollection, Feature, FeatureCollection)
 
 from .antimeridian import antimeridian_cut
-from .orientation import is_counterclockwise
-from .bbox import geom_bbox, geometry_collection_bbox, feature_bbox, feature_collection_bbox
+from .bbox import (geom_bbox, geometry_collection_bbox,
+                   feature_bbox, feature_collection_bbox)
 from .result import GeoJSONResult
 
 DEFAULTCRS = {"type": "name",
