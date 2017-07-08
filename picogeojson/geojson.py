@@ -72,8 +72,7 @@ class Deserializer(object):
     deserializer.fromstring().
 
     {}"""
-    def __init__(self, enforce_poly_winding=True, defaultcrs=None):
-        self.enforce_poly_winding = enforce_poly_winding
+    def __init__(self, defaultcrs=None):
         if defaultcrs is None:
             defaultcrs = DEFAULTCRS
         self.defaultcrs = defaultcrs
@@ -119,10 +118,6 @@ class Deserializer(object):
         for i, ring in enumerate(coords):
             if ring[0] != ring[-1]:
                 ring.append(ring[0])
-        if self.enforce_poly_winding:
-            for i, ring in enumerate(coords):
-                if bool(i) is is_counterclockwise(ring):
-                    coords[i] = ring[::-1]
         return Polygon(coords, crs)
 
     def _parseMultiPolygon(self, d):
@@ -132,11 +127,6 @@ class Deserializer(object):
             for i, ring in enumerate(polygon):
                 if ring[0] != ring[-1]:
                     ring.append(ring[0])
-        if self.enforce_poly_winding:
-            for j, polygon in enumerate(coords):
-                for i, ring in enumerate(polygon):
-                    if bool(i) is is_counterclockwise(ring):
-                        coords[j][i] = ring[::-1]
         return MultiPolygon(coords, crs)
 
     def _parseGeometryCollection(self, o):
@@ -187,12 +177,6 @@ serializer_args = """
         possibly changing type in the process (e.g. LineString to
         MultiLineString) (default True).
 
-    enforce_poly_winding:
-        Ensures that serialized Polygon and MultiPolygon instances have
-        counterclockwise external boundaries and clockwise internal boundaries
-        (holes). Note that some visualization backends (notably SVG and HTML
-        Canvas) take the opposing convention (default True).
-
     write_bbox : bool
         Causes geometries and features to have a `bbox` member (default True).
 
@@ -210,10 +194,8 @@ class Serializer(object):
         json_string = serializer(named_tuple)
 
     {}"""
-    def __init__(self, antimeridian_cutting=True, enforce_poly_winding=True,
-                 write_bbox=True, write_crs=False):
+    def __init__(self, antimeridian_cutting=True, write_bbox=True, write_crs=False):
         self.antimeridian_cutting = antimeridian_cutting
-        self.enforce_poly_winding = enforce_poly_winding
         self.write_bbox = write_bbox
         self.write_crs = write_crs
         return
@@ -243,20 +225,6 @@ class Serializer(object):
 
             d = {"type": type(geom).__name__,
                  "coordinates": geom.coordinates}
-
-            if self.enforce_poly_winding:
-                if type(geom).__name__ == "Polygon":
-                    d["coordinates"] = copy.copy(d["coordinates"])
-                    cx = d["coordinates"]
-                    for i, ring in enumerate(cx):
-                        if bool(i) is is_counterclockwise(ring):
-                            cx[i] = ring[::-1]
-                elif type(geom).__name__ == "MultiPolygon":
-                    d["coordinates"] = copy.deepcopy(d["coordinates"])
-                    for j, cx in enumerate(d["coordinates"]):
-                        for i, ring in enumerate(cx):
-                            if bool(i) is is_counterclockwise(ring):
-                                d["coordinates"][j][i] = ring[::-1]
 
             if root and self.write_bbox:
                 d["bbox"] = geom_bbox(geom)

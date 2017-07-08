@@ -1,6 +1,7 @@
 import itertools
 import attr
 
+from .orientation import is_counterclockwise
 from .validators import depth1, depth2, depth3, depth4
 
 def as_nested_lists(obj):
@@ -26,6 +27,21 @@ def close_rings_inplace(obj):
 def as_closed_lists(obj):
     return close_rings_inplace(as_nested_lists(obj))
 
+def polygon_converter(obj):
+    obj = close_rings_inplace(as_nested_lists(obj))
+    for i, ring in enumerate(obj):
+        if bool(i) is is_counterclockwise(ring):
+            obj[i] = ring[::-1]
+    return obj
+
+def multipolygon_converter(obj):
+    obj = close_rings_inplace(as_nested_lists(obj))
+    for j, cx in enumerate(obj):
+        for i, ring in enumerate(cx):
+            if bool(i) is is_counterclockwise(ring):
+                obj[j][i] = ring[::-1]
+    return obj
+
 @attr.s(cmp=False, slots=True)
 class Point(object):
     coordinates = attr.ib(validator=depth1)
@@ -48,12 +64,12 @@ class MultiLineString(object):
 
 @attr.s(cmp=False, slots=True)
 class Polygon(object):
-    coordinates = attr.ib(repr=False, convert=as_closed_lists, validator=depth3)
+    coordinates = attr.ib(repr=False, convert=polygon_converter, validator=depth3)
     crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)
 class MultiPolygon(object):
-    coordinates = attr.ib(repr=False, convert=as_closed_lists, validator=depth4)
+    coordinates = attr.ib(repr=False, convert=multipolygon_converter, validator=depth4)
     crs = attr.ib(default=None, repr=False)
 
 @attr.s(cmp=False, slots=True)

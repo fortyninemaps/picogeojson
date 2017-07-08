@@ -216,25 +216,6 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(list(linestring.coordinates), list(d["coordinates"]))
         return
 
-    def test_serialize_polygon_reverse(self):
-        # serializer may be used to enforce the RFC7946 requirement for CCW
-        # external rings
-        #
-        # this test creates a backwards Polygon, and checks that the serializer
-        # roverses it when told to do so, but not otherwise
-        serializer = Serializer(enforce_poly_winding=True)
-        polygon = pico.Polygon([[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]])
-        s = serializer(polygon)
-        d_ccw = json.loads(s)
-
-        serializer = Serializer(enforce_poly_winding=False)
-        polygon = pico.Polygon([[(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]])
-        s = serializer(polygon)
-        d_cw = json.loads(s)
-
-        self.assertEqual(d_ccw["coordinates"][0], d_cw["coordinates"][0][::-1])
-        return
-
     def test_serialize_polygon(self):
         polygon = pico.Polygon([[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0], [44.0, 17.0]],
                                 [[1.0, 1.0], [0.8, -0.7], [0.5, -0.5], [1.0, 1.0]]],
@@ -280,23 +261,6 @@ class SerializerTests(unittest.TestCase):
         s = self.serializer(multipolygon)
         d = json.loads(s)
         self.assertEqual(list(multipolygon.coordinates), list(d["coordinates"]))
-        return
-
-    def test_serialize_multipolygon_reverse(self):
-        multipolygon = pico.MultiPolygon(
-                            [[[[0.0, 0.0], [2.0, 0.0], [1, 2.0], [0.0, 0.0]]],
-                             [[[0.0, 0.0], [-2.0, 0.0], [-1.0, 2.0], [0.0, 0.0]]]],
-                            DEFAULTCRS)
-
-        serializer = Serializer(enforce_poly_winding=True)
-        s = serializer(multipolygon)
-        d_ccw = json.loads(s)
-
-        serializer = Serializer(enforce_poly_winding=False)
-        s = serializer(multipolygon)
-        d_cw = json.loads(s)
-
-        self.assertEqual(d_cw["coordinates"][1][0], d_ccw["coordinates"][1][0][::-1])
         return
 
     def test_serialize_geometrycollection(self):
