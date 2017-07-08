@@ -700,33 +700,18 @@ class ClosedRingTests(unittest.TestCase):
             "coordinates": [[[0, 0], [1, 0], [2, 1]]]}""")
         self.assertClosed(polygon)
 
-        polygon = pico.loads("""{"type": "Polygon",
-            "coordinates": [[[0, 0], [1, 0], [2, 1], [0, 0]]]}""")
-        self.assertClosed(polygon)
-
     def test_check_polygon_interior_ring(self):
         polygon = pico.loads("""{"type": "Polygon",
             "coordinates": [[[0, 0], [1, 0], [2, 1], [0, 0]],
                             [[0.5,0.5], [0.6,0.5], [0.6,0.7]]]}""")
         self.assertClosed(polygon)
 
-        polygon = pico.loads("""{"type": "Polygon",
-            "coordinates": [[[0, 0], [1, 0], [2, 1], [0, 0]],
-                            [[0.5,0.5], [0.6,0.5], [0.6,0.7], [0.5,0.5]]]}""")
-        self.assertClosed(polygon)
-
     def test_check_multipolygon_ring(self):
 
         geom = pico.loads("""{"type": "MultiPolygon",
             "coordinates": [[[[0, 0], [1, 0], [2, 1]]],
-                            [[[-4,-4], [5,-6], [2,10], [-4,-4]]]]}""")
+                            [[[-4,-4], [5,-6], [2, 10]]]]}""")
         self.assertClosed(geom)
-
-        geom = pico.loads("""{"type": "MultiPolygon",
-            "coordinates": [[[[0, 0], [1, 0], [2, 1], [0, 0]]],
-                            [[[-4,-4], [5,-6], [2,10], [-4,-4]]]]}""")
-        self.assertClosed(geom)
-
 
 if __name__ == "__main__":
     unittest.main()

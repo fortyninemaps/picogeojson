@@ -1,6 +1,8 @@
 import itertools
 import attr
 
+from .validators import depth1, depth2, depth3, depth4
+
 def as_nested_lists(obj):
     """ Convert all but the lowest level of iterables to lists """
     if not hasattr(obj, "__getitem__") or not hasattr(obj[0], "__getitem__"):
@@ -9,6 +11,7 @@ def as_nested_lists(obj):
         return [as_nested_lists(a) for a in obj]
 
 def close_rings_inplace(obj):
+    """ Identify rings in a list of lists and ensure that they're closed. """
     if hasattr(obj, "__getitem__") and hasattr(obj[0], "__getitem__"):
         if hasattr(obj[0][0], "__getitem__"):
             # obj contains rings
@@ -22,26 +25,6 @@ def close_rings_inplace(obj):
 
 def as_closed_lists(obj):
     return close_rings_inplace(as_nested_lists(obj))
-
-# Point
-def depth1(cls, attribute, value):
-    if not hasattr(value, "__getitem__") or hasattr(value[0], "__getitem__"):
-        raise TypeError("require 1-dimensional coordinate list")
-
-# LineString
-def depth2(cls, attribute, value):
-    if not (depth1 and hasattr(value[0], "__getitem__")):
-        raise TypeError("require 2-dimensional coordinate list")
-
-# Polygon, MultiLineString
-def depth3(cls, attribute, value):
-    if not (depth2 and hasattr(value[0][0], "__getitem__")):
-        raise TypeError("require 3-dimensional coordinate list")
-
-# MultiPolygon
-def depth4(cls, attribute, value):
-    if not (depth3 and hasattr(value[0][0][0], "__getitem__")):
-        raise TypeError("require 4-dimensional coordinate list")
 
 @attr.s(cmp=False, slots=True)
 class Point(object):
