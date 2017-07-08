@@ -1,6 +1,8 @@
+from numbers import Number
+
 # Point
 def depth1(cls, attr, val):
-    if not hasattr(val, "__getitem__") or hasattr(val[0], "__getitem__"):
+    if not hasattr(val, "__getitem__") or not isinstance(val[0], Number):
         raise TypeError("received {} but require position iterable".format(val))
 
 # LineString

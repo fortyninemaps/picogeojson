@@ -14,7 +14,7 @@ setup(
         install_requires = ["attrs>=17.0.0"],
         classifiers=[
             'Development Status :: 5 - Production/Stable',
-            'Topic :: Scientific/Engineering :: GIS'
+            'Topic :: Scientific/Engineering :: GIS',
             'Intended Audience :: Developers',
             'License :: OSI Approved :: MIT License',
             'Programming Language :: Python :: 2',

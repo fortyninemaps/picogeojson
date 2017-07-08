@@ -1,20 +1,21 @@
 import itertools
 import attr
+from collections import Iterable
 
 from .orientation import is_counterclockwise
 from .validators import depth1, depth2, depth3, depth4
 
 def as_nested_lists(obj):
     """ Convert all but the lowest level of iterables to lists """
-    if not hasattr(obj, "__getitem__") or not hasattr(obj[0], "__getitem__"):
+    if not isinstance(obj, Iterable) or not isinstance(obj[0], Iterable):
         return obj
     else:
         return [as_nested_lists(a) for a in obj]
 
 def close_rings_inplace(obj):
     """ Identify rings in a list of lists and ensure that they're closed. """
-    if hasattr(obj, "__getitem__") and hasattr(obj[0], "__getitem__"):
-        if hasattr(obj[0][0], "__getitem__"):
+    if isinstance(obj, Iterable) and isinstance(obj[0], Iterable):
+        if isinstance(obj[0][0], Iterable):
             # obj contains rings
             for part in obj:
                 close_rings_inplace(part)
