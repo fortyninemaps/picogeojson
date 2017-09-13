@@ -1,6 +1,5 @@
 import json
 import os
-import pathlib
 import sys
 import unittest
 
@@ -8,6 +7,11 @@ if sys.version_info.major >= 3:
     from io import StringIO
 else:
     from StringIO import StringIO
+
+try:
+    import pathlib
+except ImportError:
+    pass
 
 import picogeojson as pico
 from picogeojson import Serializer, Deserializer, merge, burst, DEFAULTCRS
@@ -109,6 +113,8 @@ class DeserializerTests(unittest.TestCase):
             [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
         return
 
+    @unittest.skipIf(sys.version_info.major < 3 or sys.version_info.minor < 4,
+                     "pathlib added in Python 3.4")
     def test_polygon_read_pathlib(self):
         res = self.deserializer.fromfile(pathlib.Path(TESTDATA) / 'polygon.json')
         self.assertEqual(res.coordinates,

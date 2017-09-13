@@ -90,6 +90,9 @@ class Deserializer(object):
     def fromfile(self, f):
         if hasattr(f, 'read'):
             return self.deserialize(json.load(f))
+        elif hasattr(f, 'open'):
+            with f.open() as f:
+                return self.deserialize(json.load(f))
         with open(f) as f:
             return self.deserialize(json.load(f))
 
