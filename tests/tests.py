@@ -1,8 +1,9 @@
-import unittest
-import os
 import json
-
+import os
+import pathlib
 import sys
+import unittest
+
 if sys.version_info.major >= 3:
     from io import StringIO
 else:
@@ -104,6 +105,12 @@ class DeserializerTests(unittest.TestCase):
 
     def test_polygon_read(self):
         res = self.deserializer.fromfile(os.path.join(TESTDATA, 'polygon.json'))
+        self.assertEqual(res.coordinates,
+            [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
+        return
+
+    def test_polygon_read_pathlib(self):
+        res = self.deserializer.fromfile(pathlib.Path(TESTDATA) / 'polygon.json')
         self.assertEqual(res.coordinates,
             [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
         return

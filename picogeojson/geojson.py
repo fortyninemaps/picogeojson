@@ -90,11 +90,8 @@ class Deserializer(object):
     def fromfile(self, f):
         if hasattr(f, 'read'):
             return self.deserialize(json.load(f))
-        elif isinstance(f, str):
-            with open(f) as f:
-                return self.deserialize(json.load(f))
-        else:
-            raise TypeError("input must be a file object or a filename")
+        with open(f) as f:
+            return self.deserialize(json.load(f))
 
     def _parsePoint(self, d):
         crs = d.get("crs", self.defaultcrs)
