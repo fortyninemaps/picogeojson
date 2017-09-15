@@ -334,6 +334,9 @@ def tofile(geom, f, **kw):
     {} """
     if hasattr(f, "write"):
         f.write(tostring(geom, **kw))
+    elif hasattr(f, "open"):
+        with f.open("w") as fobj:
+            fobj.write(tostring(geom, **kw))
     else:
         with open(f, "w") as fobj:
             fobj.write(tostring(geom, **kw))

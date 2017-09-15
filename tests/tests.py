@@ -113,8 +113,7 @@ class DeserializerTests(unittest.TestCase):
             [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
         return
 
-    @unittest.skipIf(sys.version_info.major < 3 or sys.version_info.minor < 4,
-                     "pathlib added in Python 3.4")
+    @unittest.skipIf(sys.version_info < (3, 4), "pathlib support missing")
     def test_polygon_read_pathlib(self):
         res = self.deserializer.fromfile(pathlib.Path(TESTDATA) / 'polygon.json')
         self.assertEqual(res.coordinates,
