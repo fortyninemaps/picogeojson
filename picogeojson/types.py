@@ -91,9 +91,27 @@ class FeatureCollection(object):
     crs = attr.ib(default=None, repr=False)
 
 def merge(items):
-    """ Combine a list of GeoJSON types into the single most specific type that
-    retains all information. """
+    """ Combine a list of GeoJSON objects into the single most specific type
+    that retains all information.
+
+    For example,
+
+    - merging two Point objects creates a MultiPoint
+    - merging a Point and a LineString creates a GeometryCollection
+    - merging a multiple Features creates a FeatureCollection
+
+    Raises
+
+    - ValueError when the list contains nothing
+    - TypeError when merging a Geometry and a Feature/FeatureCollection
+    """
     items = list(items)
+
+    if len(items) == 0:
+        raise ValueError("zero-length iterable cannot be merged")
+    elif len(items) == 1:
+        return items[0]
+
     t0 = type(items[0]).__name__
     if all(type(g).__name__ == t0 for g in items[1:]):
         if items[0].crs is None and any(it.crs is not None for it in items[1:]):

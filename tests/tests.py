@@ -516,6 +516,15 @@ class FixedPrecisionTests(unittest.TestCase):
 
 class MergeBurstTests(unittest.TestCase):
 
+    def test_merge_empty(self):
+        with self.assertRaises(ValueError):
+            merge([])
+
+    def test_merge_one(self):
+        pt = pico.Point((1, 2))
+        merged = merge([pt])
+        self.assertEqual(pt, merged)
+
     def test_merge_points(self):
         pts = [pico.Point((1, 2)),
                pico.Point((3, 4)),
