@@ -7,7 +7,7 @@ The functions
 - `fromstring()` and `fromfile()` return namedtuples from GeoJSON input
 - `tostring()` returns GeoJSON from a namedtuple
 - `result_fromstring()` and `result_fromfile()` return namedtuples wrapped as a
-  GeoJSONResult so that values of a specific types can be safely extracted
+  *Result* so that values of a specific types can be safely extracted
 
 Additionally,
 
@@ -37,7 +37,7 @@ from .types import (Point, LineString, Polygon,
 from .antimeridian import antimeridian_cut
 from .bbox import (geom_bbox, geometry_collection_bbox,
                    feature_bbox, feature_collection_bbox)
-from .result import GeoJSONResult
+from .result import Result
 
 DEFAULTCRS = {"type": "name",
               "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
@@ -302,17 +302,17 @@ def fromstring(s, **kw):
 
 @docstring_insert(deserializer_args)
 def result_fromfile(f, **kw):
-    """ Read a JSON file and return a GeoJSONResult.
+    """ Read a JSON file and return a *Result*.
     {} """
     d = Deserializer(**kw)
-    return GeoJSONResult(d.fromfile(f))
+    return Result(d.fromfile(f))
 
 @docstring_insert(deserializer_args)
 def result_fromstring(s, **kw):
-    """ Read a JSON string and return a GeoJSONResult.
+    """ Read a JSON string and return a *Result*.
     {} """
     d = Deserializer(**kw)
-    return GeoJSONResult(d.fromstring(s))
+    return Result(d.fromstring(s))
 
 @docstring_insert(serializer_args)
 def todict(geom, **kw):

@@ -1,5 +1,5 @@
 
-class GeoJSONResult(object):
+class Result(object):
 
     def __init__(self, obj):
         self.obj = obj
@@ -73,3 +73,4 @@ class GeoJSONResult(object):
                 for feat in obj.features:
                     objs.append(feat)
 
+GeoJSONResult = Result
