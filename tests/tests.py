@@ -458,6 +458,11 @@ class BboxTests(unittest.TestCase):
         bbx = bbox.coordstring_bbox(cs)
         self.assertEqual(bbx, [0, -8, 1, 27, 10, 4])
 
+    def test_coordinate_bbox_empty(self):
+        cs = []
+        bbx = bbox.coordstring_bbox(cs)
+        self.assertTrue(bbx is None)
+
     def test_point_bbox_2(self):
         p = pico.Point((2, 3))
         bbx = bbox.geom_bbox(p)
@@ -476,6 +481,15 @@ class BboxTests(unittest.TestCase):
                             DEFAULTCRS)
         bbx = bbox.geom_bbox(collection)
         self.assertEqual(bbx, [1, 2, 5, 6])
+
+    def test_geometrycollection_bbox_some_empty(self):
+        collection = pico.GeometryCollection(
+                            [pico.Point((3, 4), None),
+                             pico.Point((5, 6), None),
+                             pico.GeometryCollection([], None)],
+                            DEFAULTCRS)
+        bbx = bbox.geom_bbox(collection)
+        self.assertEqual(bbx, [3, 4, 5, 6])
 
     def test_geometrycollection_bbox_3(self):
         collection = pico.GeometryCollection(
@@ -499,6 +513,20 @@ class BboxTests(unittest.TestCase):
                     {"type": "river"}, None, None)
         bbx = bbox.feature_bbox(feature)
         self.assertEqual(bbx, [1, 2, 0, 2, 3, 1])
+
+    def test_feature_collection_bbox_empty(self):
+        collection = pico.FeatureCollection([], None)
+        self.assertTrue(bbox.feature_collection_bbox(collection) is None)
+
+    def test_feature_collection_bbox(self):
+        feature1 = pico.Feature(pico.LineString([(1,2), (1,3), (2, 2)], None),
+                                {"type": "river"}, None, None)
+
+        feature2 = pico.Feature(pico.Point((0,2), None),
+                                {"type": "spring"}, None, None)
+        collection = pico.FeatureCollection([feature1, feature2], None)
+        bbx = bbox.feature_collection_bbox(collection)
+        self.assertEqual(bbx, [0, 2, 2, 3])
 
 class FixedPrecisionTests(unittest.TestCase):
 
