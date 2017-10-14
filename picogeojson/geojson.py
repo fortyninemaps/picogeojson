@@ -178,7 +178,7 @@ serializer_args = """
         MultiLineString) (default True).
 
     write_bbox : bool
-        Causes geometries and features to have a `bbox` member (default True).
+        Attempt to write a `bbox` member (default True).
 
     write_crs : bool
         Causes geometries and features to have a `crs` member (default False).
@@ -227,7 +227,9 @@ class Serializer(object):
                  "coordinates": geom.coordinates}
 
             if root and self.write_bbox:
-                d["bbox"] = geom_bbox(geom)
+                bb = geom_bbox(geom)
+                if bb is not None:
+                    d["bbox"] = bb
 
             if root and self.write_crs and (geom.crs is not None):
                 d["crs"] = geom.crs
@@ -242,7 +244,9 @@ class Serializer(object):
             d["id"] = feature.id
 
         if root and self.write_bbox:
-            d["bbox"] = feature_bbox(feature)
+            bb = feature_bbox(feature)
+            if bb is not None:
+                d["bbox"] = bb
 
         if root and self.write_crs and (feature.crs is not None):
             d["crs"] = feature.crs
@@ -254,7 +258,9 @@ class Serializer(object):
                             for g in coll.geometries]}
 
         if root and self.write_bbox:
-            d["bbox"] = geometry_collection_bbox(coll)
+            bb = geometry_collection_bbox(coll)
+            if bb is not None:
+                d["bbox"] = bb
 
         if root and self.write_crs and (coll.crs is not None):
             d["crs"] = coll.crs
@@ -265,7 +271,9 @@ class Serializer(object):
              "features": [self.feature_asdict(f, root=False) for f in coll.features]}
 
         if self.write_bbox:
-            d["bbox"] = feature_collection_bbox(coll)
+            bb = feature_collection_bbox(coll)
+            if bb is not None:
+                d["bbox"] = bb
 
         if root and self.write_crs and (coll.crs is not None):
             d["crs"] = coll.crs

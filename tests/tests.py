@@ -287,6 +287,14 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual(d.get("crs", ""), DEFAULTCRS)
         return
 
+    def test_serialize_geometrycollection_empty(self):
+        collection = pico.GeometryCollection([], DEFAULTCRS)
+        s = self.serializer(collection)
+        d = json.loads(s)
+        self.assertEqual(len(d.get("geometries", [0])), 0)
+        self.assertEqual(d.get("crs", ""), DEFAULTCRS)
+        return
+
     def test_top_bbox_only_geometry_collection(self):
         collection = pico.GeometryCollection(
                             [pico.Point((3, 4), None),
@@ -333,6 +341,14 @@ class SerializerTests(unittest.TestCase):
         s = self.serializer(collection)
         d = json.loads(s)
         self.assertEqual(len(d.get("features", [])), 3)
+        self.assertEqual(d.get("crs", ""), DEFAULTCRS)
+        return
+
+    def test_serialize_featurecollection_empty(self):
+        collection = pico.FeatureCollection([], DEFAULTCRS)
+        s = self.serializer(collection)
+        d = json.loads(s)
+        self.assertEqual(len(d.get("features", [0])), 0)
         self.assertEqual(d.get("crs", ""), DEFAULTCRS)
         return
 
