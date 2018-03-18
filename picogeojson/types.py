@@ -43,52 +43,68 @@ def multipolygon_converter(obj):
                 obj[j][i] = ring[::-1]
     return obj
 
-@attr.s(cmp=False, slots=True)
+@attr.s(cmp=True, slots=True)
 class Point(object):
     coordinates = attr.ib(validator=depth1)
     crs = attr.ib(default=None)
 
-@attr.s(cmp=False, slots=True)
+@attr.s(cmp=True, slots=True)
 class MultiPoint(object):
     coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=depth2)
     crs = attr.ib(default=None, repr=False)
 
-@attr.s(cmp=False, slots=True)
+@attr.s(cmp=True, slots=True)
 class LineString(object):
     coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=depth2)
     crs = attr.ib(default=None, repr=False)
 
-@attr.s(cmp=False, slots=True)
+@attr.s(cmp=True, slots=True)
 class MultiLineString(object):
     coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=depth3)
     crs = attr.ib(default=None, repr=False)
 
-@attr.s(cmp=False, slots=True)
+@attr.s(cmp=True, slots=True)
 class Polygon(object):
     coordinates = attr.ib(repr=False, convert=polygon_converter, validator=depth3)
     crs = attr.ib(default=None, repr=False)
 
-@attr.s(cmp=False, slots=True)
+@attr.s(cmp=True, slots=True)
 class MultiPolygon(object):
     coordinates = attr.ib(repr=False, convert=multipolygon_converter, validator=depth4)
     crs = attr.ib(default=None, repr=False)
 
-@attr.s(cmp=False, slots=True)
+@attr.s(cmp=True, slots=True)
 class GeometryCollection(object):
-    geometries = attr.ib()
+    geometries = attr.ib(type=list)
     crs = attr.ib(default=None, repr=False)
 
-@attr.s(cmp=False, slots=True)
+@attr.s(cmp=True, slots=True)
 class Feature(object):
     geometry = attr.ib()
     properties = attr.ib()
     id = attr.ib(default=None, repr=False)
     crs = attr.ib(default=None, repr=False)
 
-@attr.s(cmp=False, slots=True)
+    def map_geometry(self, func):
+        return Feature(func(self.geometry), self.properties, self.id, self.crs)
+
+    def map_properties(self, func):
+        return Feature(self.geometry, func(self.properties), self.id, self.crs)
+
+@attr.s(cmp=True, slots=True)
 class FeatureCollection(object):
-    features = attr.ib()
+    features = attr.ib(type=list)
     crs = attr.ib(default=None, repr=False)
+
+    def __add__(self, other):
+        return FeatureCollection(self.features + other.features, self.crs)
+
+    def map(self, func):
+        return FeatureCollection(list(map(func, self.features)))
+
+    def flatmap(self, func):
+        features = [output for output in func(f) for f in self.features]
+        return FeatureCollection(features)
 
 def merge(items):
     """ Combine a list of GeoJSON objects into the single most specific type

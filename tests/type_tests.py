@@ -67,5 +67,40 @@ class ClosedRingTests(unittest.TestCase):
                             [[[-4,-4], [5,-6], [2, 10]]]]}""")
         self.assertClosed(geom)
 
+class FuncTests(unittest.TestCase):
+
+    def test_feature_collection_add(self):
+        fc0 = pico.FeatureCollection([pico.Point([1,2]), pico.LineString([(0, 1), (1, 3), (2, 2)])])
+        fc1 = pico.FeatureCollection([])
+        fc2 = pico.FeatureCollection([pico.Polygon([[(0, 0), (0, 2), (1, 1), (0, 0)]]),
+                                      pico.Point([1,2])])
+
+        aggregate = fc0 + fc1 + fc2
+        self.assertEqual(aggregate.features,
+                         [pico.Point([1,2]),
+                          pico.LineString([(0, 1), (1, 3), (2, 2)]),
+                          pico.Polygon([[(0, 0), (0, 2), (1, 1), (0, 0)]]),
+                          pico.Point([1,2])])
+
+    def test_feature_collection_map(self):
+        fc = pico.FeatureCollection([
+            pico.Feature(pico.Polygon([[(0, 0), (1, 1), (0, 2), (0, 0)]]), {}),
+            pico.Feature(pico.Polygon([[(0, 0), (2, 2), (0, 4), (0, 0)]]), {}),
+            pico.Feature(pico.Polygon([[(0, 0), (-1, -1), (0, -2), (0, 0)]]), {})
+        ])
+
+        def to_linestring(feature):
+            return pico.Feature(pico.LineString(feature.geometry.coordinates[0]), {"converted": True})
+
+        expected = pico.FeatureCollection([
+            pico.Feature(pico.LineString([(0, 0), (1, 1), (0, 2), (0, 0)]), {"converted": True}),
+            pico.Feature(pico.LineString([(0, 0), (2, 2), (0, 4), (0, 0)]), {"converted": True}),
+            pico.Feature(pico.LineString([(0, 0), (-1, -1), (0, -2), (0, 0)]), {"converted": True})
+        ])
+
+        self.assertEqual(fc.map(to_linestring), expected)
+
+
+
 if __name__ == "__main__":
     unittest.main()

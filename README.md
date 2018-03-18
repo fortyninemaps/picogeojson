@@ -7,7 +7,7 @@ Straightforward and compliant GeoJSON parsing and serialization with zero
 dependencies. Easily ingest or output GeoJSON adhering to
 [RFC 7946](https://tools.ietf.org/html/rfc7946).
 
-## Usage
+## Encoding and Decoding
 
 GeoJSON files or strings are read using `fromfile()` or `fromstring()` (alias
 `loads()`).
@@ -16,6 +16,8 @@ GeoJSON files or strings are read using `fromfile()` or `fromstring()` (alias
 pt = picogeojson.fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}')
 # -> Point(coordinates=[1.0, 3.0])
 ```
+
+## Extractors
 
 Sometimes a particular type of GeoJSON object is expected (e.g. from an API GET
 request), but for safety the type needs to be checked. Alternatively, the
@@ -44,6 +46,18 @@ for feature in result.features("Polygon", {"type": "Lake", "state": "Oregon"}):
     # do something with lakes in Oregon
     # ...
 ```
+
+## Map and FlatMap
+
+A `Feature` has `.map_geometry` and `.map_properties` methods for clean transformations.
+
+<!-- give a demo -->
+
+A `FeatureCollection` has a `.map` method that operates on the `Feature` list.
+
+<!-- give a demo -->
+
+## Miscellaneous
 
 GeoJSON objects may be constructed in Python and composed (`merge()`) or split
 (`burst()`).
