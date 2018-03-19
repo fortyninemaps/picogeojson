@@ -19,7 +19,7 @@ import picogeojson.bbox as bbox
 from picogeojson.geojson import fixed_precision
 from picogeojson.result import Result
 
-from type_tests import ClosedRingTests, InvalidCoordTests
+from type_tests import ClosedRingTests, InvalidCoordTests, FuncTests
 from result_tests import ResultTests
 
 TESTDATA = "tests/"

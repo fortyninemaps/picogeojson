@@ -78,6 +78,22 @@ class GeometryCollection(object):
     geometries = attr.ib(type=list)
     crs = attr.ib(default=None, repr=False)
 
+    def __add__(self, other):
+        return GeometryCollection(self.geometries + other.geometries, self.crs)
+
+    def map(self, func):
+        """ Apply a callable *func* that takes a Feature and returns a Feature.
+        """
+        return GeometryCollection(list(map(func, self.geometries)))
+
+    def flatmap(self, func):
+        """ Combine the results from a callable *func* that takes a Geometry and
+        returns a GeometryCollection.
+        """
+        geometries = [geometry for geom in self.geometries
+                               for geometry in func(geom).geometries]
+        return GeometryCollection(geometries)
+
 @attr.s(cmp=True, slots=True)
 class Feature(object):
     geometry = attr.ib()
@@ -86,9 +102,15 @@ class Feature(object):
     crs = attr.ib(default=None, repr=False)
 
     def map_geometry(self, func):
+        """ Apply a callable *func* that takes a Geometry and returns a
+        Geometry.
+        """
         return Feature(func(self.geometry), self.properties, self.id, self.crs)
 
     def map_properties(self, func):
+        """ Apply a callable *func* that takes a properties dictionary and
+        returns a new dictionary.
+        """
         return Feature(self.geometry, func(self.properties), self.id, self.crs)
 
 @attr.s(cmp=True, slots=True)
@@ -100,10 +122,16 @@ class FeatureCollection(object):
         return FeatureCollection(self.features + other.features, self.crs)
 
     def map(self, func):
+        """ Apply a callable *func* that takes a Feature and returns a Feature.
+        """
         return FeatureCollection(list(map(func, self.features)))
 
     def flatmap(self, func):
-        features = [output for output in func(f) for f in self.features]
+        """ Combine the results from a function *func* that takes a Feature and
+        returns a FeatureCollection.
+        """
+        features = [feature for feat in self.features
+                            for feature in func(feat).features]
         return FeatureCollection(features)
 
 def merge(items):

@@ -82,7 +82,43 @@ class FuncTests(unittest.TestCase):
                           pico.Polygon([[(0, 0), (0, 2), (1, 1), (0, 0)]]),
                           pico.Point([1,2])])
 
-    def test_feature_collection_map(self):
+    def test_geometrycollection_map(self):
+        gc = pico.GeometryCollection([
+            pico.Polygon([[(0, 0), (1, 1), (0, 2), (0, 0)]]),
+            pico.Polygon([[(0, 0), (2, 2), (0, 4), (0, 0)]]),
+            pico.Polygon([[(0, 0), (-1, -1), (0, -2), (0, 0)]])
+        ])
+
+        def to_linestring(geometry):
+            return pico.LineString(geometry.coordinates[0])
+
+        expected = pico.GeometryCollection([
+            pico.LineString([(0, 0), (1, 1), (0, 2), (0, 0)]),
+            pico.LineString([(0, 0), (2, 2), (0, 4), (0, 0)]),
+            pico.LineString([(0, 0), (-1, -1), (0, -2), (0, 0)])
+        ])
+
+        self.assertEqual(gc.map(to_linestring), expected)
+
+    def test_geometrycollection_flatmap(self):
+        gc = pico.GeometryCollection([
+            pico.MultiPoint([(0, 0), (1, 1), (0, 2), (0, 0)]),
+            pico.MultiPoint([(0, 0), (2, 2), (0, 4), (0, 0)])
+        ])
+
+        def to_points(geometry):
+            return pico.GeometryCollection(
+                [pico.Point(xy) for xy in geometry.coordinates]
+            )
+
+        expected = pico.GeometryCollection([
+            pico.Point((0, 0)), pico.Point((1, 1)), pico.Point((0, 2)), pico.Point((0, 0)),
+            pico.Point((0, 0)), pico.Point((2, 2)), pico.Point((0, 4)), pico.Point((0, 0))
+        ])
+
+        self.assertEqual(gc.flatmap(to_points), expected)
+
+    def test_featurecollection_map(self):
         fc = pico.FeatureCollection([
             pico.Feature(pico.Polygon([[(0, 0), (1, 1), (0, 2), (0, 0)]]), {}),
             pico.Feature(pico.Polygon([[(0, 0), (2, 2), (0, 4), (0, 0)]]), {}),
@@ -100,6 +136,26 @@ class FuncTests(unittest.TestCase):
 
         self.assertEqual(fc.map(to_linestring), expected)
 
+    def test_featurecollection_flatmap(self):
+        gc = pico.FeatureCollection([
+            pico.Feature(pico.MultiPoint([(0, 0), (1, 1), (0, 2), (0, 0)]), {"group": 1}),
+            pico.Feature(pico.MultiPoint([(0, 0), (2, 2), (0, 4), (0, 0)]), {"group": 2})
+        ])
+
+        def to_points(feature):
+            return pico.FeatureCollection(
+                [pico.Feature(pico.Point(xy), feature.properties)
+                 for xy in feature.geometry.coordinates]
+            )
+
+        expected = pico.FeatureCollection([
+            pico.Feature(pico.Point((0, 0)), {"group": 1}), pico.Feature(pico.Point((1, 1)), {"group": 1}),
+            pico.Feature(pico.Point((0, 2)), {"group": 1}), pico.Feature(pico.Point((0, 0)), {"group": 1}),
+            pico.Feature(pico.Point((0, 0)), {"group": 2}), pico.Feature(pico.Point((2, 2)), {"group": 2}),
+            pico.Feature(pico.Point((0, 4)), {"group": 2}), pico.Feature(pico.Point((0, 0)), {"group": 2})
+        ])
+
+        self.assertEqual(gc.flatmap(to_points), expected)
 
 
 if __name__ == "__main__":
