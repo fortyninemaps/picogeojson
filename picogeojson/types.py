@@ -48,30 +48,50 @@ class Point(object):
     coordinates = attr.ib(validator=depth1)
     crs = attr.ib(default=None)
 
+    def transform(self, func):
+        return Point(func(self.coordinates), self.crs)
+
 @attr.s(cmp=True, slots=True)
 class MultiPoint(object):
     coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=depth2)
     crs = attr.ib(default=None, repr=False)
+
+    def transform(self, func):
+        return MultiPoint(list(map(func, self.coordinates)), self.crs)
 
 @attr.s(cmp=True, slots=True)
 class LineString(object):
     coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=depth2)
     crs = attr.ib(default=None, repr=False)
 
+    def transform(self, func):
+        return LineString(list(map(func, self.coordinates)), self.crs)
+
 @attr.s(cmp=True, slots=True)
 class MultiLineString(object):
     coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=depth3)
     crs = attr.ib(default=None, repr=False)
+
+    def transform(self, func):
+        return MultiLineString([list(map(func, cx)) for cx in self.coordinates],
+                               self.crs)
 
 @attr.s(cmp=True, slots=True)
 class Polygon(object):
     coordinates = attr.ib(repr=False, convert=polygon_converter, validator=depth3)
     crs = attr.ib(default=None, repr=False)
 
+    def transform(self, func):
+        return Polygon([list(map(func, cx)) for cx in self.coordinates], self.crs)
+
 @attr.s(cmp=True, slots=True)
 class MultiPolygon(object):
     coordinates = attr.ib(repr=False, convert=multipolygon_converter, validator=depth4)
     crs = attr.ib(default=None, repr=False)
+
+    def transform(self, func):
+        return MultiPolygon([[list(map(func, cx)) for cx in poly] for poly in self.coordinates],
+                            self.crs)
 
 @attr.s(cmp=True, slots=True)
 class GeometryCollection(object):
@@ -81,10 +101,15 @@ class GeometryCollection(object):
     def __add__(self, other):
         return GeometryCollection(self.geometries + other.geometries, self.crs)
 
+    def transform(self, func):
+        return GeometryCollection([g.transform(func) for g in self.geometries],
+                                  crs=self.crs)
+
     def map(self, func):
-        """ Apply a callable *func* that takes a Feature and returns a Feature.
+        """ Apply a callable *func* that takes a Geometry and returns a
+        Geometry.
         """
-        return GeometryCollection(list(map(func, self.geometries)))
+        return GeometryCollection(list(map(func, self.geometries)), crs=self.crs)
 
     def flatmap(self, func):
         """ Combine the results from a callable *func* that takes a Geometry and
@@ -92,7 +117,7 @@ class GeometryCollection(object):
         """
         geometries = [geometry for geom in self.geometries
                                for geometry in func(geom).geometries]
-        return GeometryCollection(geometries)
+        return GeometryCollection(geometries, crs=self.crs)
 
 @attr.s(cmp=True, slots=True)
 class Feature(object):
@@ -100,6 +125,10 @@ class Feature(object):
     properties = attr.ib()
     id = attr.ib(default=None, repr=False)
     crs = attr.ib(default=None, repr=False)
+
+    def transform(self, func):
+        return Feature(self.geometry.transform(func), self.properties, self.id,
+                       self.crs)
 
     def map_geometry(self, func):
         """ Apply a callable *func* that takes a Geometry and returns a
@@ -120,6 +149,10 @@ class FeatureCollection(object):
 
     def __add__(self, other):
         return FeatureCollection(self.features + other.features, self.crs)
+
+    def transform(self, func):
+        return FeatureCollection([f.transform(func) for f in self.features],
+                                  crs=self.crs)
 
     def map(self, func):
         """ Apply a callable *func* that takes a Feature and returns a Feature.

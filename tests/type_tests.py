@@ -69,6 +69,33 @@ class ClosedRingTests(unittest.TestCase):
 
 class FuncTests(unittest.TestCase):
 
+    def test_point_transform(self):
+        def shift1(cx):
+            return (cx[0]+1, cx[1]+1)
+        pt = pico.Point((1, 2)).transform(shift1)
+        self.assertEqual(pt.coordinates, (2, 3))
+
+    def test_linestring_transform(self):
+        def shift1(cx):
+            return (cx[0]+1, cx[1]+1)
+        ls = pico.LineString([(1, 2), (-3, 5)]).transform(shift1)
+        self.assertEqual(ls.coordinates, [(2, 3), (-2, 6)])
+
+    def test_multipolygon_transform(self):
+        def shift1(cx):
+            return (cx[0]+1, cx[1]+1)
+        ls = pico.MultiPolygon(
+                [
+                    [[(1, 2), (-3, 5), (0, 0), (1, 2)]],
+                    [[(-1, -2), (3, -5), (0, 0), (-1, -2)]],
+                ]
+        ).transform(shift1)
+        self.assertEqual(ls.coordinates,
+                [
+                    [[(2, 3), (-2, 6), (1, 1), (2, 3)]],
+                    [[(0, -1), (4, -4), (1, 1), (0, -1)]],
+                ])
+
     def test_feature_collection_add(self):
         fc0 = pico.FeatureCollection([pico.Point([1,2]), pico.LineString([(0, 1), (1, 3), (2, 2)])])
         fc1 = pico.FeatureCollection([])
