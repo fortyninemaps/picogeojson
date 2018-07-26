@@ -182,6 +182,9 @@ serializer_args = """
 
     write_crs : bool
         Causes geometries and features to have a `crs` member (default False).
+
+    precision : int
+        If set, restricts the precision after the decimal in the output
     """
 
 @docstring_insert(serializer_args)
@@ -194,10 +197,14 @@ class Serializer(object):
         json_string = serializer(named_tuple)
 
     {}"""
-    def __init__(self, antimeridian_cutting=True, write_bbox=True, write_crs=False):
+    def __init__(self, antimeridian_cutting=True, write_bbox=True, write_crs=False, precision=None):
         self.antimeridian_cutting = antimeridian_cutting
         self.write_bbox = write_bbox
         self.write_crs = write_crs
+        if precision is None:
+            self.prepare_coords = identity
+        else:
+            self.prepare_coords = lambda cx: fixed_precision(cx, precision)
         return
 
     def __call__(self, geom, indent=_INDENT):
@@ -224,7 +231,7 @@ class Serializer(object):
                     geom = antimeridian_cut(geom)
 
             d = {"type": type(geom).__name__,
-                 "coordinates": geom.coordinates}
+                 "coordinates": self.prepare_coords(geom.coordinates)}
 
             if root and self.write_bbox:
                 bb = geom_bbox(geom)
@@ -278,6 +285,9 @@ class Serializer(object):
         if root and self.write_crs and (coll.crs is not None):
             d["crs"] = coll.crs
         return d
+
+def identity(A):
+    return A
 
 def fixed_precision(A, prec=6):
     """ Recursively convert nested iterables or coordinates to nested lists at

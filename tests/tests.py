@@ -380,6 +380,14 @@ class SerializerTests(unittest.TestCase):
         s = self.serializer(coll)
         self.assertEqual(s.count('"crs"'), 1)
 
+    def test_serialize_precision_point(self):
+        pt = pico.Point((44.1234567, 17.0987654))
+        ser = Serializer(precision=3)
+        s = ser(pt)
+        d = json.loads(s)
+        self.assertEqual((44.123, 17.099), tuple(d["coordinates"]))
+        return
+
 
 class AntimerdianTests(unittest.TestCase):
 
