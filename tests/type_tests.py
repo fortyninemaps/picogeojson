@@ -97,17 +97,22 @@ class FuncTests(unittest.TestCase):
                 ])
 
     def test_feature_collection_add(self):
-        fc0 = pico.FeatureCollection([pico.Point([1,2]), pico.LineString([(0, 1), (1, 3), (2, 2)])])
+        fc0 = pico.FeatureCollection([
+            pico.Feature(pico.Point([1,2]), {}),
+            pico.Feature(pico.LineString([(0, 1), (1, 3), (2, 2)]), {})
+        ])
         fc1 = pico.FeatureCollection([])
-        fc2 = pico.FeatureCollection([pico.Polygon([[(0, 0), (0, 2), (1, 1), (0, 0)]]),
-                                      pico.Point([1,2])])
+        fc2 = pico.FeatureCollection([
+            pico.Feature(pico.Polygon([[(0, 0), (0, 2), (1, 1), (0, 0)]]), {}),
+            pico.Feature(pico.Point([1,2]), {})
+        ])
 
         aggregate = fc0 + fc1 + fc2
         self.assertEqual(aggregate.features,
-                         [pico.Point([1,2]),
-                          pico.LineString([(0, 1), (1, 3), (2, 2)]),
-                          pico.Polygon([[(0, 0), (0, 2), (1, 1), (0, 0)]]),
-                          pico.Point([1,2])])
+                         [pico.Feature(pico.Point([1,2]), {}),
+                          pico.Feature(pico.LineString([(0, 1), (1, 3), (2, 2)]), {}),
+                          pico.Feature(pico.Polygon([[(0, 0), (0, 2), (1, 1), (0, 0)]]), {}),
+                          pico.Feature(pico.Point([1,2]), {})])
 
     def test_geometrycollection_map(self):
         gc = pico.GeometryCollection([
@@ -184,6 +189,84 @@ class FuncTests(unittest.TestCase):
 
         self.assertEqual(gc.flatmap(to_points), expected)
 
+class AfterTests(unittest.TestCase):
+
+    def test_after_point_func(self):
+        ptA = pico.Point((1, 2))
+        ptB = ptA.after(lambda pt: pico.Point((pt.coordinates[0]+1, pt.coordinates[1]-1)))
+        self.assertEqual(ptB, pico.Point((2, 1)))
+
+    def test_after_point_func_predicate(self):
+        ptA = pico.Point((1, 2))
+        ptB = ptA.after(lambda pt: pico.Point((pt.coordinates[0]+1, pt.coordinates[1]-1)),
+                        lambda _: False)
+        self.assertEqual(ptB, pico.Point((1, 2)))
+
+    def test_after_collection_func_predicate(self):
+        ptA = pico.Point((1, 2))
+
+        coll = pico.GeometryCollection([
+            pico.Point((1, 2)),
+            pico.Point((4, 1)),
+            pico.Point((8, 7)),
+            pico.LineString([(0, 0), (0, 1), (1, 2), (2, 2)]),
+        ])
+
+        expected = pico.GeometryCollection([
+            pico.Point((2, 1)),
+            pico.Point((5, 0)),
+            pico.Point((9, 6)),
+            pico.LineString([(0, 0), (0, 1), (1, 2), (2, 2)]),
+        ])
+
+        new = coll.after(lambda pt: pico.Point((pt.coordinates[0]+1, pt.coordinates[1]-1)),
+                         cond=lambda g: type(g).__name__ == "Point")
+
+        self.assertEqual(new, expected)
+
+    def test_after_feature_coll_func_predicate(self):
+        ptA = pico.Point((1, 2))
+
+        feats = pico.FeatureCollection([
+            pico.Feature(
+                pico.Point((1, 2)),
+                properties={"color": "red"}
+            ),
+            pico.Feature(
+                pico.Point((3, 5)),
+                properties={"color": "blue"}
+            ),
+            pico.Feature(
+                pico.Polygon([[(3, 5), (3, -7), (2, 6)]]),
+                properties={"color": "blue"}
+            ),
+        ])
+
+        expected = pico.FeatureCollection([
+            pico.Feature(
+                pico.Point((1, 2)),
+                properties={"color": "red"}
+            ),
+            pico.Feature(
+                pico.Point((-3, -5)),
+                properties={"color": "blue"}
+            ),
+            pico.Feature(
+                pico.Polygon([[(3, 5), (3, -7), (2, 6)]]),
+                properties={"color": "blue"}
+            ),
+        ])
+
+        new = feats.after(
+                lambda f: pico.Feature(pico.Point((-f.geometry.coordinates[0],
+                                                   -f.geometry.coordinates[1])),
+                                       f.properties),
+                cond=lambda g: type(g).__name__ == "Feature" and \
+                               type(g.geometry).__name__ == "Point" and \
+                               g.properties.get("color") == "blue"
+                )
+
+        self.assertEqual(new, expected)
 
 if __name__ == "__main__":
     unittest.main()

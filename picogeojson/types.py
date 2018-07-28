@@ -1,8 +1,10 @@
 import attr
 from collections import Iterable
+from copy import copy
 
+from . import validators
 from .orientation import is_counterclockwise
-from .validators import depth1, depth2, depth3, depth4
+from .identity import identity
 
 def as_nested_lists(obj):
     """ Convert all but the lowest level of iterables to lists. """
@@ -44,33 +46,43 @@ def multipolygon_converter(obj):
                 obj[j][i] = ring[::-1]
     return obj
 
+def true(a):
+    return True
+
+class After(object):
+    def after(self, func, cond=true):
+        return func(self) if cond(self) else self
+
 @attr.s(cmp=True, slots=True)
-class Point(object):
-    coordinates = attr.ib(validator=depth1)
+class Point(After):
+    coordinates = attr.ib(validator=validators.depth1)
     crs = attr.ib(default=None)
 
     def transform(self, func):
         return Point(func(self.coordinates), self.crs)
 
 @attr.s(cmp=True, slots=True)
-class MultiPoint(object):
-    coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=depth2)
+class MultiPoint(After):
+    coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=validators.depth2)
     crs = attr.ib(default=None, repr=False)
+
+    def copy(self, predicate, func):
+        return func(self) if predicate(self) else copy(self)
 
     def transform(self, func):
         return MultiPoint(list(map(func, self.coordinates)), self.crs)
 
 @attr.s(cmp=True, slots=True)
-class LineString(object):
-    coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=depth2)
+class LineString(After):
+    coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=validators.depth2)
     crs = attr.ib(default=None, repr=False)
 
     def transform(self, func):
         return LineString(list(map(func, self.coordinates)), self.crs)
 
 @attr.s(cmp=True, slots=True)
-class MultiLineString(object):
-    coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=depth3)
+class MultiLineString(After):
+    coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=validators.depth3)
     crs = attr.ib(default=None, repr=False)
 
     def transform(self, func):
@@ -78,16 +90,16 @@ class MultiLineString(object):
                                self.crs)
 
 @attr.s(cmp=True, slots=True)
-class Polygon(object):
-    coordinates = attr.ib(repr=False, convert=polygon_converter, validator=depth3)
+class Polygon(After):
+    coordinates = attr.ib(repr=False, convert=polygon_converter, validator=validators.depth3)
     crs = attr.ib(default=None, repr=False)
 
     def transform(self, func):
         return Polygon([list(map(func, cx)) for cx in self.coordinates], self.crs)
 
 @attr.s(cmp=True, slots=True)
-class MultiPolygon(object):
-    coordinates = attr.ib(repr=False, convert=multipolygon_converter, validator=depth4)
+class MultiPolygon(After):
+    coordinates = attr.ib(repr=False, convert=multipolygon_converter, validator=validators.depth4)
     crs = attr.ib(default=None, repr=False)
 
     def transform(self, func):
@@ -95,12 +107,17 @@ class MultiPolygon(object):
                             self.crs)
 
 @attr.s(cmp=True, slots=True)
-class GeometryCollection(object):
-    geometries = attr.ib(type=list)
+class GeometryCollection(After):
+    geometries = attr.ib(type=list, validator=validators.only_geometries)
     crs = attr.ib(default=None, repr=False)
 
     def __add__(self, other):
         return GeometryCollection(self.geometries + other.geometries, self.crs)
+
+    def after(self, func, cond=true):
+        geom = GeometryCollection([g.after(func, cond=cond) for g in self.geometries],
+                                  crs=self.crs)
+        return func(geom) if cond(self) else geom
 
     def transform(self, func):
         return GeometryCollection([g.transform(func) for g in self.geometries],
@@ -121,11 +138,16 @@ class GeometryCollection(object):
         return GeometryCollection(geometries, crs=self.crs)
 
 @attr.s(cmp=True, slots=True)
-class Feature(object):
-    geometry = attr.ib()
+class Feature(After):
+    geometry = attr.ib(validator=validators.is_geometry)
     properties = attr.ib()
     id = attr.ib(default=None, repr=False)
     crs = attr.ib(default=None, repr=False)
+
+    def after(self, func, cond=true):
+        f = Feature(self.geometry.after(func, cond=cond), self.properties,
+                    id=self.id, crs=self.crs)
+        return func(f) if cond(self) else f
 
     def transform(self, func):
         return Feature(self.geometry.transform(func), self.properties, self.id,
@@ -144,12 +166,17 @@ class Feature(object):
         return Feature(self.geometry, func(self.properties), self.id, self.crs)
 
 @attr.s(cmp=True, slots=True)
-class FeatureCollection(object):
-    features = attr.ib(type=list)
+class FeatureCollection(After):
+    features = attr.ib(type=list, validator=validators.only_features)
     crs = attr.ib(default=None, repr=False)
 
     def __add__(self, other):
         return FeatureCollection(self.features + other.features, self.crs)
+
+    def after(self, func, cond=true):
+        fc = FeatureCollection([f.after(func, cond=cond) for f in self.features],
+                               crs=self.crs)
+        return func(fc) if cond(self) else fc
 
     def transform(self, func):
         return FeatureCollection([f.transform(func) for f in self.features],

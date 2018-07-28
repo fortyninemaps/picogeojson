@@ -157,3 +157,5 @@ def antimeridian_cut(obj):
     elif isinstance(obj, FeatureCollection):
         return FeatureCollection([antimeridian_cut(f) for f in obj.features],
                                  obj.crs)
+    else:
+        return obj

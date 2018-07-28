@@ -20,8 +20,8 @@ import picogeojson.bbox as bbox
 from picogeojson.serializer import fixed_precision
 from picogeojson.map import Map
 
-from type_tests import ClosedRingTests, InvalidCoordTests, FuncTests
-from result_tests import MapTests
+from type_tests import ClosedRingTests, InvalidCoordTests, FuncTests, AfterTests
+from map_tests import MapTests
 
 TESTDATA = "tests/"
 

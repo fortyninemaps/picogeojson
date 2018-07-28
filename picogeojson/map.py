@@ -1,4 +1,6 @@
 from . import Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon
+from .types import true
+from .serializer import Serializer
 
 class Map(object):
     """ It's a monad! """
@@ -17,11 +19,23 @@ class Map(object):
                 for geom in obj.geometries:
                     objs.append(geom)
 
-    def map(self, func, typ, **kw):
-        raise NotImplementedError()
+    def after(self, func, cond=true):
+        return Map(self.raw.after(func, cond))
 
-    def map_features(self, geometry_type=None, **properties):
-        raise NotImplementedError
+    def map(self, func, typ, **kw):
+        return self.after(
+                func,
+                lambda obj: type(obj).__name__ == typ.__name__,
+        )
+
+    def map_features(self, func, geometry_type=None, properties=None):
+        return self.after(
+                func,
+                lambda obj: type(obj).__name__ == "Feature" and \
+                        (geometry_type is None or type(obj.geometry) == geometry_type.__name__) and \
+                        (properties is None or \
+                            type(obj).__name__ == "Feature" and propmatch(obj.properties, properties)),
+        )
 
     def extract(self, typ, **kw):
         return self._geometry_getter(typ, **kw)
@@ -45,16 +59,11 @@ class Map(object):
             if type(obj).__name__ == "Feature":
                 typematch = (geometry_type is None) or \
                         (type(obj.geometry).__name__ == geometry_type.__name__)
-                if typematch:
-                    propmatch = properties is None or \
-                            all(k in obj.properties for k in properties) and \
-                            all(obj.properties[k] == v for k, v in properties.items())
-                    if propmatch:
-                        yield(obj)
+                if typematch and (properties is None or propmatch(obj.properties, properties)):
+                    yield(obj)
             elif type(obj).__name__ == "FeatureCollection":
                 for feat in obj.features:
                     objs.append(feat)
-
 
     @property
     def points(self):
@@ -86,3 +95,6 @@ class Map(object):
         """ Returns a generator yielding all MultiPolygon objects in the result. """
         return self._geometry_getter(MultiPolygon)
 
+def propmatch(testing, required):
+    return all(k in testing for k in required) and \
+           all(testing[k] == v for k, v in required.items())

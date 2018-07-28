@@ -31,8 +31,6 @@ class MapTests(unittest.TestCase):
                      LineString([(1, 1), (2, 2), (3, 3)]),
                      Point((11, 12)),
                      LineString([(1, 1), (2, 2), (3, 3)]),
-                     FeatureCollection([
-                     ]),
                      MultiLineString([[(1, 1), (2, 2), (3, 3)],
                                                   [(4, 4), (5, 5), (6, 6)]]),
                      ],
@@ -176,6 +174,90 @@ class MapTests(unittest.TestCase):
         self.assertEqual(count, 2)
         for f in result.extract_features(properties={"style": "kolsch"}):
             self.assertTrue(isinstance(f.geometry, MultiPoint))
+
+    def test_map_geometries(self):
+        m = Map(
+                GeometryCollection([
+                    Point((1, 2)),
+                    LineString([(5, 7), (2, 4), (5, 9)]),
+                    MultiPoint([(0, 3), (12, 5), (6, 2), (8, 9)]),
+                ])
+        )
+
+        expected_original = GeometryCollection([
+                    Point((1, 2)),
+                    LineString([(5, 7), (2, 4), (5, 9)]),
+                    MultiPoint([(0, 3), (12, 5), (6, 2), (8, 9)]),
+                ])
+
+        expected_new = GeometryCollection([
+                    Point((-1, -2)),
+                    LineString([(5, 7), (2, 4), (5, 9)]),
+                    MultiPoint([(0, 3), (12, 5), (6, 2), (8, 9)]),
+                ])
+
+        m2 = m.map(lambda pt: Point((-pt.coordinates[0], -pt.coordinates[1])),
+                   Point)
+
+        self.assertEqual(m.raw, expected_original)
+        self.assertEqual(m2.raw, expected_new)
+
+    def test_map_geometries_to_feature_fails(self):
+        m = Map(
+                GeometryCollection([
+                    Point((1, 2)),
+                    LineString([(5, 7), (2, 4), (5, 9)]),
+                    MultiPoint([(0, 3), (12, 5), (6, 2), (8, 9)]),
+                ])
+        )
+
+        with self.assertRaises(TypeError):
+            m2 = m.map(lambda pt: Feature(
+                                    Point((-pt.coordinates[0], -pt.coordinates[1])),
+                                    {}
+                       ), Point)
+
+    def test_map_features(self):
+        m = Map(
+                FeatureCollection([
+                    Feature(Point((1, 0)), {"color": "red"}),
+                    Feature(Point((3, 2)), {"color": "blue"}),
+                ])
+        )
+
+        expected = FeatureCollection([
+                    Feature(Point((-1, 0)), {"color": "red"}),
+                    Feature(Point((-3, 2)), {"color": "blue"}),
+                ])
+
+        new = m.map_features(
+                lambda f: Feature(Point((-f.geometry.coordinates[0],
+                                         f.geometry.coordinates[1])),
+                                 f.properties)
+        )
+        self.assertEqual(new.raw, expected)
+
+    def test_map_features_by_properties(self):
+        m = Map(
+                FeatureCollection([
+                    Feature(Point((1, 0)), {"color": "red"}),
+                    Feature(Point((3, 2)), {"color": "blue"}),
+                ])
+        )
+
+        expected = FeatureCollection([
+                    Feature(Point((1, 0)), {"color": "red"}),
+                    Feature(Point((-3, 2)), {"color": "blue"}),
+                ])
+
+        new = m.map_features(
+                lambda f: Feature(Point((-f.geometry.coordinates[0],
+                                         f.geometry.coordinates[1])),
+                                  f.properties),
+                properties={"color": "blue"}
+        )
+        self.assertEqual(new.raw, expected)
+
 
 if __name__ == "__main__":
     unittest.main()
