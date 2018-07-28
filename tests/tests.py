@@ -388,6 +388,14 @@ class SerializerTests(unittest.TestCase):
         self.assertEqual((44.123, 17.099), tuple(d["coordinates"]))
         return
 
+    def test_serialize_precision_bbox(self):
+        ls = pico.LineString([(-1.1111111, 2.2222222), (3.3333333, -7.7777777)])
+        ser = Serializer(precision=3, write_bbox=True)
+        s = ser(ls)
+        d = json.loads(s)
+        self.assertEqual([-1.111, -7.778, 3.333, 2.222], d["bbox"])
+        return
+
 
 class AntimerdianTests(unittest.TestCase):
 

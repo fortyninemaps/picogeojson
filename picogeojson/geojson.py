@@ -236,7 +236,7 @@ class Serializer(object):
             if root and self.write_bbox:
                 bb = geom_bbox(geom)
                 if bb is not None:
-                    d["bbox"] = bb
+                    d["bbox"] = self.prepare_coords(bb)
 
             if root and self.write_crs and (geom.crs is not None):
                 d["crs"] = geom.crs
