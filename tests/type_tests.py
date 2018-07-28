@@ -50,19 +50,19 @@ class ClosedRingTests(unittest.TestCase):
                         self.fail()
 
     def test_check_polygon_ring(self):
-        polygon = pico.loads("""{"type": "Polygon",
+        polygon = pico.fromstring("""{"type": "Polygon",
             "coordinates": [[[0, 0], [1, 0], [2, 1]]]}""")
         self.assertClosed(polygon)
 
     def test_check_polygon_interior_ring(self):
-        polygon = pico.loads("""{"type": "Polygon",
+        polygon = pico.fromstring("""{"type": "Polygon",
             "coordinates": [[[0, 0], [1, 0], [2, 1], [0, 0]],
                             [[0.5,0.5], [0.6,0.5], [0.6,0.7]]]}""")
         self.assertClosed(polygon)
 
     def test_check_multipolygon_ring(self):
 
-        geom = pico.loads("""{"type": "MultiPolygon",
+        geom = pico.fromstring("""{"type": "MultiPolygon",
             "coordinates": [[[[0, 0], [1, 0], [2, 1]]],
                             [[[-4,-4], [5,-6], [2, 10]]]]}""")
         self.assertClosed(geom)

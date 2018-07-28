@@ -3,9 +3,9 @@ from picogeojson import (Point, LineString, Polygon,
                          MultiPoint, MultiLineString, MultiPolygon,
                          GeometryCollection, Feature, FeatureCollection,
                          DEFAULTCRS)
-from picogeojson.result import Result
+from picogeojson.map import Map
 
-class ResultTests(unittest.TestCase):
+class MapTests(unittest.TestCase):
 
     def setUp(self):
         self.geometrycollection = \
@@ -62,7 +62,7 @@ class ResultTests(unittest.TestCase):
         ], DEFAULTCRS)
 
     def test_get_points(self):
-        result = Result(self.geometrycollection)
+        result = Map(self.geometrycollection)
         count = 0
         for pt in result.points:
             self.assertTrue(isinstance(pt, Point))
@@ -70,7 +70,7 @@ class ResultTests(unittest.TestCase):
         self.assertEqual(count, 4)
 
     def test_get_linestrings(self):
-        result = Result(self.geometrycollection)
+        result = Map(self.geometrycollection)
         count = 0
         for ls in result.linestrings:
             self.assertTrue(isinstance(ls, LineString))
@@ -78,7 +78,7 @@ class ResultTests(unittest.TestCase):
         self.assertEqual(count, 4)
 
     def test_get_polygons(self):
-        result = Result(self.geometrycollection)
+        result = Map(self.geometrycollection)
         count = 0
         for pg in result.polygons:
             self.assertTrue(isinstance(pg, Polygon))
@@ -86,7 +86,7 @@ class ResultTests(unittest.TestCase):
         self.assertEqual(count, 2)
 
     def test_get_multipoints(self):
-        result = Result(self.geometrycollection)
+        result = Map(self.geometrycollection)
         count = 0
         for mpt in result.multipoints:
             self.assertTrue(isinstance(mpt, MultiPoint))
@@ -94,7 +94,7 @@ class ResultTests(unittest.TestCase):
         self.assertEqual(count, 1)
 
     def test_get_multilinestrings(self):
-        result = Result(self.geometrycollection)
+        result = Map(self.geometrycollection)
         count = 0
         for mls in result.multilinestrings:
             self.assertTrue(isinstance(mls, MultiLineString))
@@ -102,7 +102,7 @@ class ResultTests(unittest.TestCase):
         self.assertEqual(count, 1)
 
     def test_get_multipolygons(self):
-        result = Result(self.geometrycollection)
+        result = Map(self.geometrycollection)
         count = 0
         for mpg in result.multipolygons:
             self.assertTrue(isinstance(mpg, MultiPolygon))
@@ -110,71 +110,71 @@ class ResultTests(unittest.TestCase):
         self.assertEqual(count, 1)
 
     def test_get_point_features(self):
-        result = Result(self.featurecollection)
+        result = Map(self.featurecollection)
         count = 0
-        for f in result.features("Point"):
+        for f in result.extract_features(Point):
             self.assertTrue(isinstance(f, Feature))
             self.assertTrue(isinstance(f.geometry, Point))
             count += 1
         self.assertEqual(count, 1)
 
     def test_get_linestring_features(self):
-        result = Result(self.featurecollection)
+        result = Map(self.featurecollection)
         count = 0
-        for f in result.features("LineString"):
+        for f in result.extract_features(LineString):
             self.assertTrue(isinstance(f, Feature))
             self.assertTrue(isinstance(f.geometry, LineString))
             count += 1
         self.assertEqual(count, 1)
 
     def test_get_polygon_features(self):
-        result = Result(self.featurecollection)
+        result = Map(self.featurecollection)
         count = 0
-        for f in result.features("Polygon"):
+        for f in result.extract_features(Polygon):
             self.assertTrue(isinstance(f, Feature))
             self.assertTrue(isinstance(f.geometry, Polygon))
             count += 1
         self.assertEqual(count, 1)
 
     def test_get_multipoint_features(self):
-        result = Result(self.featurecollection)
+        result = Map(self.featurecollection)
         count = 0
-        for f in result.features("MultiPoint"):
+        for f in result.extract_features(MultiPoint):
             self.assertTrue(isinstance(f, Feature))
             self.assertTrue(isinstance(f.geometry, MultiPoint))
             count += 1
         self.assertEqual(count, 1)
 
     def test_get_multilinestring_features(self):
-        result = Result(self.featurecollection)
+        result = Map(self.featurecollection)
         count = 0
-        for f in result.features("MultiLineString"):
+        for f in result.extract_features(MultiLineString):
             self.assertTrue(isinstance(f, Feature))
             self.assertTrue(isinstance(f.geometry, MultiLineString))
             count += 1
         self.assertEqual(count, 1)
 
     def test_get_multipolygon_features(self):
-        result = Result(self.featurecollection)
+        result = Map(self.featurecollection)
         count = 0
-        for f in result.features("MultiPolygon"):
+        for f in result.extract_features(MultiPolygon):
             self.assertTrue(isinstance(f, Feature))
             self.assertTrue(isinstance(f.geometry, MultiPolygon))
             count += 1
         self.assertEqual(count, 1)
 
     def test_features_argument_error(self):
-        result = Result(self.featurecollection)
+        result = Map(self.featurecollection)
         with self.assertRaises(TypeError):
-            [a for a in result.features({"style": "stout"})]
+            [a for a in result.extract_features({"style": "stout"})]
 
     def test_get_by_attributes(self):
-        result = Result(self.featurecollection)
+        result = Map(self.featurecollection)
         count = 0
-        for f in result.features(properties={"style": "stout"}):
+        for f in result.extract_features(properties={"style": "stout"}):
             count += 1
         self.assertEqual(count, 2)
-        for f in result.features(properties={"style": "kolsch"}):
+        for f in result.extract_features(properties={"style": "kolsch"}):
             self.assertTrue(isinstance(f.geometry, MultiPoint))
 
 if __name__ == "__main__":

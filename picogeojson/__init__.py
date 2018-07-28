@@ -1,15 +1,19 @@
-__version__ = "0.7.0.dev1"
+__version__ = "0.7.0.dev2"
 
 from .types import (Point, LineString, Polygon,
                     MultiPoint, MultiLineString, MultiPolygon,
-                    GeometryCollection, Feature, FeatureCollection,
-                    merge, burst)
+                    GeometryCollection, Feature, FeatureCollection)
 
-from .geojson import (Serializer, Deserializer,
-                      DEFAULTCRS,
-                      fromfile, fromstring, fromdict, tofile, tostring, todict,
-                      load, dump, loads, dumps,
-                      result_fromstring, result_fromfile)
+from .map import Map
+
+from .deserializer import Deserializer, fromfile, fromstring, fromdict
+
+from .serializer import Serializer, tofile, tostring, todict
+
+from .crs import DEFAULTCRS
 
 from . import antimeridian
 from . import orientation
+
+from . import transformations
+

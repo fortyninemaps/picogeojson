@@ -14,13 +14,14 @@ except ImportError:
     pass
 
 import picogeojson as pico
-from picogeojson import Serializer, Deserializer, merge, burst, DEFAULTCRS
+from picogeojson import Serializer, Deserializer, DEFAULTCRS
+from picogeojson.transformations import merge, burst
 import picogeojson.bbox as bbox
-from picogeojson.geojson import fixed_precision
-from picogeojson.result import Result
+from picogeojson.serializer import fixed_precision
+from picogeojson.map import Map
 
 from type_tests import ClosedRingTests, InvalidCoordTests, FuncTests
-from result_tests import ResultTests
+from result_tests import MapTests
 
 TESTDATA = "tests/"
 
@@ -32,7 +33,7 @@ class DeserializerTests(unittest.TestCase):
 
     def test_shorthand(self):
         res = pico.fromfile(os.path.join(TESTDATA, 'point.json'))
-        self.assertEqual(res.coordinates, [100.0, 0.0])
+        self.assertEqual(res.raw.coordinates, [100.0, 0.0])
         return
 
     def test_fromdict(self):
@@ -48,13 +49,13 @@ class DeserializerTests(unittest.TestCase):
                 }
         }
         geom = pico.fromdict(d)
-        self.assertEqual(d["geometry"]["coordinates"], geom.geometry.coordinates)
-        self.assertEqual(d["properties"], geom.properties)
+        self.assertEqual(d["geometry"]["coordinates"], geom.raw.geometry.coordinates)
+        self.assertEqual(d["properties"], geom.raw.properties)
         return
 
     def test_shorthand_result(self):
-        res = pico.result_fromfile(os.path.join(TESTDATA, 'point.json'))
-        self.assertEqual(type(res), Result)
+        res = pico.fromfile(os.path.join(TESTDATA, 'point.json'))
+        self.assertEqual(type(res), Map)
         for pt in res.points:
             self.assertEqual(pt.coordinates, [100.0, 0.0])
         return
@@ -63,77 +64,70 @@ class DeserializerTests(unittest.TestCase):
         with open(os.path.join(TESTDATA, 'point.json'), 'r') as f:
             string = f.read()
         res = pico.fromstring(string)
-        self.assertEqual(res.coordinates, [100.0, 0.0])
-        return
-
-    def test_shorthand_string_compat(self):
-        with open(os.path.join(TESTDATA, 'point.json'), 'r') as f:
-            string = f.read()
-        res = pico.loads(string)
-        self.assertEqual(res.coordinates, [100.0, 0.0])
+        self.assertEqual(res.raw.coordinates, [100.0, 0.0])
         return
 
     def test_shorthand_string_result(self):
         with open(os.path.join(TESTDATA, 'point.json'), 'r') as f:
             string = f.read()
-        res = pico.result_fromstring(string)
-        self.assertEqual(type(res), Result)
+        res = pico.fromstring(string)
+        self.assertEqual(type(res), Map)
         for pt in res.points:
             self.assertEqual(pt.coordinates, [100.0, 0.0])
         return
 
     def test_point_read(self):
         res = self.deserializer.fromfile(os.path.join(TESTDATA, 'point.json'))
-        self.assertEqual(res.coordinates, [100.0, 0.0])
+        self.assertEqual(res.raw.coordinates, [100.0, 0.0])
 
         # check __call__ version
         res = self.deserializer(os.path.join(TESTDATA, 'point.json'))
-        self.assertEqual(res.coordinates, [100.0, 0.0])
+        self.assertEqual(res.raw.coordinates, [100.0, 0.0])
         return
 
     def test_point_read_fileobject(self):
         with open(os.path.join(TESTDATA, 'point.json'), 'r') as f:
             res = self.deserializer.fromfile(f)
-        self.assertEqual(res.coordinates, [100.0, 0.0])
+        self.assertEqual(res.raw.coordinates, [100.0, 0.0])
 
         # check __call__ version
         with open(os.path.join(TESTDATA, 'point.json'), 'r') as f:
             res = self.deserializer(f)
-        self.assertEqual(res.coordinates, [100.0, 0.0])
+        self.assertEqual(res.raw.coordinates, [100.0, 0.0])
         return
 
     def test_linestring_read(self):
         res = self.deserializer.fromfile(os.path.join(TESTDATA, 'linestring.json'))
-        self.assertEqual(res.coordinates, [[100.0, 0.0], [101.0, 1.0]])
+        self.assertEqual(res.raw.coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_polygon_read(self):
         res = self.deserializer.fromfile(os.path.join(TESTDATA, 'polygon.json'))
-        self.assertEqual(res.coordinates,
+        self.assertEqual(res.raw.coordinates,
             [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
         return
 
     @unittest.skipIf(sys.version_info < (3, 4), "pathlib support missing")
     def test_polygon_read_pathlib(self):
         res = self.deserializer.fromfile(pathlib.Path(TESTDATA) / 'polygon.json')
-        self.assertEqual(res.coordinates,
+        self.assertEqual(res.raw.coordinates,
             [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
         return
 
     def test_multipoint_read(self):
         res = self.deserializer.fromfile(os.path.join(TESTDATA, 'multipoint.json'))
-        self.assertEqual(res.coordinates, [[100.0, 0.0], [101.0, 1.0]])
+        self.assertEqual(res.raw.coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_multilinestring_read(self):
         res = self.deserializer.fromfile(os.path.join(TESTDATA, 'multilinestring.json'))
-        self.assertEqual(res.coordinates, [[[100.0, 0.0], [101.0, 1.0]],
+        self.assertEqual(res.raw.coordinates, [[[100.0, 0.0], [101.0, 1.0]],
                                            [[102.0, 2.0], [103.0, 3.0]]])
         return
 
     def test_multipolygon_read(self):
         res = self.deserializer.fromfile(os.path.join(TESTDATA, 'multipolygon.json'))
-        self.assertEqual(res.coordinates,
+        self.assertEqual(res.raw.coordinates,
             [[[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
              [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
               [[100.2, 0.2], [100.2, 0.8], [100.8, 0.8], [100.8, 0.2], [100.2, 0.2]]]])
@@ -141,13 +135,13 @@ class DeserializerTests(unittest.TestCase):
 
     def test_geometrycollection_read(self):
         res = self.deserializer.fromfile(os.path.join(TESTDATA, 'geometrycollection.json'))
-        self.assertEqual(len(res.geometries), 2)
-        self.assertTrue(isinstance(res.geometries[0], pico.Point))
-        self.assertTrue(isinstance(res.geometries[1], pico.LineString))
+        self.assertEqual(len(res.raw.geometries), 2)
+        self.assertTrue(isinstance(res.raw.geometries[0], pico.Point))
+        self.assertTrue(isinstance(res.raw.geometries[1], pico.LineString))
         return
 
     def test_feature_read(self):
-        fc = self.deserializer.fromfile(os.path.join(TESTDATA, 'feature.json'))
+        fc = self.deserializer.fromfile(os.path.join(TESTDATA, 'feature.json')).raw
         self.assertEqual(fc.id, 0)
         self.assertEqual(fc.geometry.coordinates,
             [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
@@ -155,7 +149,7 @@ class DeserializerTests(unittest.TestCase):
         self.assertEqual(fc.properties["name"], "Strathcona")
 
     def test_featurecollection_read(self):
-        fc = self.deserializer.fromfile(os.path.join(TESTDATA, 'featurecollection.json'))
+        fc = self.deserializer.fromfile(os.path.join(TESTDATA, 'featurecollection.json')).raw
         self.assertTrue(isinstance(fc.features[0].geometry, pico.Point))
         self.assertEqual(fc.features[0].geometry.coordinates, [102.0, 0.5])
         self.assertEqual(fc.features[0].properties, {"prop0": "value0"})
@@ -194,15 +188,10 @@ class SerializerTests(unittest.TestCase):
         f = StringIO()
         pico.tofile(pt, f)
         f.seek(0)
-        pt2 = pico.fromfile(f)
+        pt2 = pico.fromfile(f).raw
         f.close()
         self.assertEqual(tuple(pt.coordinates), tuple(pt2.coordinates))
         self.assertEqual(pt.crs, pt2.crs)
-
-    def test_shorthand_compat(self):
-        pt = pico.Point((44.0, 17.0), DEFAULTCRS)
-        d = json.loads(pico.dumps(pt))
-        self.assertEqual(tuple(pt.coordinates), tuple(d["coordinates"]))
 
     def test_todict(self):
         geom = pico.Feature(pico.Polygon([[(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]]),
