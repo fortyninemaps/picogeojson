@@ -1,6 +1,5 @@
 import attr
 from collections import Iterable
-from copy import copy
 
 from . import validators
 from .orientation import is_counterclockwise
@@ -65,9 +64,6 @@ class Point(After):
 class MultiPoint(After):
     coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=validators.depth2)
     crs = attr.ib(default=None, repr=False)
-
-    def copy(self, predicate, func):
-        return func(self) if predicate(self) else copy(self)
 
     def transform(self, func):
         return MultiPoint(list(map(func, self.coordinates)), self.crs)
