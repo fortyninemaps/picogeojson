@@ -1,6 +1,7 @@
 import unittest
 
 import picogeojson as pico
+from picogeojson import validators
 
 class InvalidCoordTests(unittest.TestCase):
     """ Geometries created with nonsensiscal coordinate arrays should raise a
@@ -267,6 +268,40 @@ class AfterTests(unittest.TestCase):
                 )
 
         self.assertEqual(new, expected)
+
+class ValidatorTests(unittest.TestCase):
+
+    def test_depth1(self):
+        with self.assertRaises(TypeError):
+            validators.depth1(None, None, 1)
+
+    def test_depth2(self):
+        with self.assertRaises(TypeError):
+            validators.depth2(None, None, (1, 2))
+
+    def test_depth3(self):
+        with self.assertRaises(TypeError):
+            validators.depth3(None,
+                              None,
+                              [(1, 2), (3, 4), (0, 0), (1, 2)])
+
+    def test_depth4(self):
+        with self.assertRaises(TypeError):
+            validators.depth4(None,
+                              None,
+                              [[(1, 2), (3, 4), (0, 0), (1, 2)]])
+
+    def test_feature_contains_geometry(self):
+        f = pico.Feature(pico.Point((1, 2)), {})
+        with self.assertRaises(TypeError):
+            pico.Feature(f, {})
+
+    def test_feature_collection_contains_features(self):
+        with self.assertRaises(TypeError):
+            pico.FeatureCollection([
+                pico.Point((1, 2)),
+                pico.Point((6, 5)),
+            ], {})
 
 if __name__ == "__main__":
     unittest.main()
