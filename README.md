@@ -16,8 +16,8 @@ GeoJSON files or strings are read using `fromstring()`, `fromfile()`,  or
 `fromdict()`.
 
 ```python
-pt = picogeojson.fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}')
-# -> Point(coordinates=[1.0, 3.0])
+picogeojson.fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}')
+# -> <picogeojson.map.Map object at ...>
 ```
 
 GeoJSON objects are serialized with `tostring()`, `tofile()`, or `todict()`.
@@ -43,8 +43,8 @@ longitude-latitude coordinates.
 coordinates (5 results in precision of 1 meter or better for longitude-latitude
 coordinates).
 
-When reading GeoJSON, *picogeojson* returns a `Map` object, which is a container
-for GeoJSON. Useful methods on `Map` objects include:
+When reading GeoJSON, *picogeojson* returns a *Map* object, which is a container
+for GeoJSON. Useful methods on *Map* objects include:
 
 **`Map.extract(geotype)`**: creates a generator for geometries of type
 *geotype*, as in
