@@ -3,22 +3,24 @@
 [![Build Status](https://travis-ci.org/fortyninemaps/picogeojson.svg?branch=master)](https://travis-ci.org/fortyninemaps/picogeojson)
 [![Coverage Status](https://coveralls.io/repos/github/fortyninemaps/picogeojson/badge.svg?branch=master)](https://coveralls.io/github/fortyninemaps/picogeojson?branch=master)
 
-Straightforward and compliant GeoJSON parsing and serialization. Easily
-ingest or output GeoJSON adhering to [RFC
-7946](https://tools.ietf.org/html/rfc7946). Pure-Python.
+# picogeojson
+
+*picogeojson* is a Python library for reading, writing, and working with
+GeoJSON. It emphasizes standard compliance ([RFC
+7946](https://tools.ietf.org/html/rfc7946)) and ergonomics. It is a pure-Python
+module for ease of installation and distribution.
 
 ## Encoding and Decoding
 
-GeoJSON files or strings are read using `fromstring()` (alias
-`loads()`), `fromfile()`,  or `fromdict()`.
+GeoJSON files or strings are read using `fromstring()`, `fromfile()`,  or
+`fromdict()`.
 
 ```python
 pt = picogeojson.fromstring('{"type": "Point", "coordinates": [1.0, 3.0]}')
 # -> Point(coordinates=[1.0, 3.0])
 ```
 
-GeoJSON objects are serialized with `tostring()` (alias `dumps()`),
-`tofile()`, or `todict()`.
+GeoJSON objects are serialized with `tostring()`, `tofile()`, or `todict()`.
 
 ```python
 picogeojson.tostring(
@@ -27,88 +29,97 @@ picogeojson.tostring(
 # -> {"coordinates": [1.0, 3.0], "type": "Point"}'
 ```
 
-Keyword arguments can be passed to `tostring()` that
-- enforce Polygon/MultiPolygon rotation direction, with counterclockwise for
-  external rings and clockwise for internal rings (`enforce_poly_winding`)
-- split objects that cross the international dateline into multipart objects,
-  for easier processing (`antimeridian_cutting`)
-- control whether `bbox` or `crs` objects are added to the JSON output
-  (`write_bbox` and `write_crs`)
+All of the serialization functions accept the following options:
 
-*picogeojson* will leverage [ujson](https://pypi.python.org/pypi/ujson) as a
-backend if it is installed. Otherwise, it uses Python's built-in `json` module.
+**`antimeridian_cutting`**: *bool*: Cuts geometries at the 180th meridian so
+that they plot well on standard world maps.
 
-## Extractors
+**`write_bbox`**: *bool*: Write an optional `bbox` member to the GeoJSON object.
 
-Using a blob of GeoJSON from a source you don't control is can be tedious -
-there's a lot of error checking to be performed to see what exactly an API
-request gave you. For that reason, *picogeojson* includes "extractors", which
-are classes that wrap an unknown GeoJSON object and perform all the unfun due
-diligence in the background.
+**`write_crs`**: *bool*: Write a non-standard `crs` member for non-WGS84
+longitude-latitude coordinates.
 
-```python
-result = picogeojson.result_fromstring(response_from_a_strangers_api.text)
+**`precision`**: *int*: Restrict the number of decimal digits in the written
+coordinates (5 results in precision of 1 meter or better for longitude-latitude
+coordinates).
 
-# Expecting one or more points or multipoints
-for geom in result.points:
-    # do something with points
-    # ...
+When reading GeoJSON, *picogeojson* returns a `Map` object, which is a container
+for GeoJSON. Useful methods on `Map` objects include:
 
-for geom in result.multilinestrings:
-    # do something with multilinestrings
-    # ...
-```
-
-This works for Features too, and we can filter by the `.properties` member.
+**`Map.extract(geotype)`**: creates a generator for geometries of type
+*geotype*, as in
 
 ```python
-result = picogeojson.result_fromstring(json_from_some_guys_van.decode("utf-8"))
+geojson = picogeojson.loads(...)
 
-for feature in result.features("Polygon", {"type": "Lake", "state": "Oregon"}):
-    # do something with lakes in Oregon
-    # ...
+for linestring in geojson.extract(picogeojson.LineString):
+    print(linestring)
 ```
 
-## Applying transformations
-
-Say you have a collection of GeoJSON objects and you want to apply a
-computation to its elements - such as reprojecting coordinates or altering
-Feature properties. Rather than unpack and repack the GeoJSON classes, use
-`.map`.
+**`Map.extract_features(geotype=None, properties=None)`**: similar to
+`Map.extract`, this extract GeoJSON features, optionally filtering by
+properties.
 
 ```python
-gc = GeometryCollection(...)
+geojson = picogeojson.loads(...)
 
-# A GeometryCollection's .map takes a function that takes a geometry and returns a geometry
-def geometry_projector(geometry):
-    ...
-    return projected_geometry
-
-projected_gc = gc.map(geometry_projector)
+for lake in geojson.features("Polygon", {"type": "Lake", "state": "Oregon"}):
+    lakes_in_oregon.append(lake)
 ```
 
-What if the mapping isn't 1-to-1, e.g. the function could return zero or
-multiple objects? Use `.flatmap`!
+**`Map.map(function, geotype)`**: returns a new `Map` with *function* applied to
+every contained GeoJSON geometry of type *geotype*.
+
+**`Map.map_features(function, geotype)`**: returns a new `Map` with *function*
+applied to every contained GeoJSON feature containing geometry *geotype* and
+matching *properties*.
+
+## Types and transformations
+
+In order to create or work with GeoJSON, *picogeojson* defines constructors for
+all GeoJSON types:
 
 ```python
-map_data = FeatureCollection(...)
+pt = picogeojson.Point([1.0, 3.5])
 
-# A GeometryCollection's .map takes a function that takes a geometry and returns a geometry
-def remove_all_the_roads(feature):
-    if feature.properties["type"] == "road":
-        return FeatureCollection([])
-    return FeatureCollection([feature])
+polygon = picogeojson.Polygon([[[100.0, 20.0], [102.0, 19.7], [102.3, 23.0],
+                                [100.1, 22.8], [100.0, 20.0]]])
 
-roadless_map_data = map_data.flatmap(remove_all_the_roads)
+feature = picojson.Feature(polygon, {"id": "example polygon"})
 ```
 
-Features also provide `.map_geometry` and a `.map_properties` methods. And of
-course, all of these can be chained.
+When constructing geometries, *picogeojson* takes care of ensuring that
+coordinate rings are closed and oriented correctly and that coordinates are
+nested to the correct depth.
+
+The following methods are available:
+
+| Type               | `.transform` | `.map` | `.flatmap` |
+|--------------------|--------------|--------|------------|
+| Point              | x            | -      | -          |
+| LineString         | x            | -      | -          |
+| Polygon            | x            | -      | -          |
+| MultiPoint         | x            | -      | -          |
+| MultiLineString    | x            | -      | -          |
+| MultiPolygon       | x            | -      | -          |
+| GeometryCollection | x            | x      | x          |
+| Feature            | x            | x      | -          |
+| FeatureCollection  | x            | x      | x          |
+
+**`.transform`** operates on coordinates, returning a new geometry or feature
+with a function applied to each coordinate pair.
+
+**`.map`** applies a function to each member of a *GeometryCollection* or
+*FeatureCollection*. *Feature*s have a `.map_geometry` and a `.map_properties`
+that apply functions to the underlying geometry or properties dict,
+respectively.
+
+**`.flatmap`** applies a function to each member of a collection, constructing a
+new collection by concatenating the result of each application.
 
 ## Miscellaneous
 
-GeoJSON objects may be constructed in Python and composed (`merge()`) or split
-(`burst()`).
+GeoJSON objects may be composed (`merge()`) or split (`burst()`).
 
 ```python
 points = [picogeojson.Point((1, 2)),
@@ -124,8 +135,11 @@ split_points = picogeojson.burst(merged_points)
 
 ## Performance
 
-These benchmarks are pretty flawed, and performance mostly depends on the
-underlying JSON library. Still, it looks like *picogeojson* holds its own.
+*picogeojson* uses [ujson](https://pypi.org/project/ujson/) if available,
+otherwise falling back on the standard library.
+
+*The following benchmarks are old and likely inaccurate.*
+
 The read benchmark involves reading a list of earthquake features. The write
 benchmark involves serializing the continent of Australia.
 
@@ -137,6 +151,3 @@ benchmark involves serializing the continent of Australia.
 |picogeojson+ujson  |1.63   |0.31\* |
 
 \*antimeridian cutting and polygon winding check set to `False`
-
-This is a standalone Python package extracted from the
-[Karta](https://karta.fortyninemaps.com) `geojson` submodule.

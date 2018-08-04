@@ -1,0 +1,12 @@
+0.7.0 - Major and non-backward compatible changes
+- dump/dumps/load/loads compatibility functions jettisoned
+- Result renamed Map, and returned by Deserializer
+    - now with extract/extract_feature/map/map_feature methods
+- all geometry and feature types now have a 'transform' method for coordinate
+  transformation
+- collection types now have map/flatmap methods
+- collection
+- sourcecode reorganization, with the following API changes
+    - picogeojson.merge and picogeojson.burst are now in the
+      picogeojson.transformations module
+- 'precision' keyword parameter added to Serializer
