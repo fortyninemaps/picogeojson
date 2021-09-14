@@ -11,7 +11,7 @@ setup(
         author="Nat Wilson",
         author_email="natw@fortyninemaps.com",
         license="MIT",
-        install_requires = ["attrs>=17.0.0", "ujson>=4.1"],
+        install_requires = ["attrs>=17.4.0", "ujson>=4.1"],
         classifiers=[
             'Development Status :: 5 - Production/Stable',
             'Topic :: Scientific/Engineering :: GIS',
