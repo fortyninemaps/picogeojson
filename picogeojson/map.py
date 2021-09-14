@@ -3,7 +3,6 @@ from .types import true
 from .serializer import Serializer
 
 class Map(object):
-    """ It's a monad! """
 
     def __init__(self, raw):
         self.raw = raw

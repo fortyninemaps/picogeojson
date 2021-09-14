@@ -62,7 +62,7 @@ class Point(After):
 
 @attr.s(cmp=True, slots=True)
 class MultiPoint(After):
-    coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=validators.depth2)
+    coordinates = attr.ib(repr=False, converter=as_nested_lists, validator=validators.depth2)
     crs = attr.ib(default=None, repr=False)
 
     def transform(self, func):
@@ -70,7 +70,7 @@ class MultiPoint(After):
 
 @attr.s(cmp=True, slots=True)
 class LineString(After):
-    coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=validators.depth2)
+    coordinates = attr.ib(repr=False, converter=as_nested_lists, validator=validators.depth2)
     crs = attr.ib(default=None, repr=False)
 
     def transform(self, func):
@@ -78,7 +78,7 @@ class LineString(After):
 
 @attr.s(cmp=True, slots=True)
 class MultiLineString(After):
-    coordinates = attr.ib(repr=False, convert=as_nested_lists, validator=validators.depth3)
+    coordinates = attr.ib(repr=False, converter=as_nested_lists, validator=validators.depth3)
     crs = attr.ib(default=None, repr=False)
 
     def transform(self, func):
@@ -87,7 +87,7 @@ class MultiLineString(After):
 
 @attr.s(cmp=True, slots=True)
 class Polygon(After):
-    coordinates = attr.ib(repr=False, convert=polygon_converter, validator=validators.depth3)
+    coordinates = attr.ib(repr=False, converter=polygon_converter, validator=validators.depth3)
     crs = attr.ib(default=None, repr=False)
 
     def transform(self, func):
@@ -95,7 +95,7 @@ class Polygon(After):
 
 @attr.s(cmp=True, slots=True)
 class MultiPolygon(After):
-    coordinates = attr.ib(repr=False, convert=multipolygon_converter, validator=validators.depth4)
+    coordinates = attr.ib(repr=False, converter=multipolygon_converter, validator=validators.depth4)
     crs = attr.ib(default=None, repr=False)
 
     def transform(self, func):

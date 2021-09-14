@@ -1,12 +1,6 @@
 import os
 
-try:
-    assert os.environ.get("PICOGEOJSON_PYJSON", "0") == "1"
-    import ujson as json
-    _INDENT = 0
-except (AssertionError, ImportError):
-    import json
-    _INDENT = None
+import ujson
 
 from .types import GeometryCollection, Feature, FeatureCollection
 
@@ -56,8 +50,8 @@ class Serializer(object):
             self.prepare_coords = lambda cx: fixed_precision(cx, precision)
         return
 
-    def __call__(self, geom, indent=_INDENT):
-        return json.dumps(self.geojson_asdict(geom), indent=indent)
+    def __call__(self, geom):
+        return ujson.dumps(self.geojson_asdict(geom), indent=0)
 
     def geojson_asdict(self, geom, root=True):
 
