@@ -135,19 +135,17 @@ split_points = picogeojson.burst(merged_points)
 
 ## Performance
 
-*picogeojson* uses [ujson](https://pypi.org/project/ujson/) if available,
-otherwise falling back on the standard library.
-
 *The following benchmarks are old and likely inaccurate.*
+
+*picogeojson* relies on [ujson](https://pypi.org/project/ujson/).
 
 The read benchmark involves reading a list of earthquake features. The write
 benchmark involves serializing the continent of Australia.
 
-|Module             |Read   |Write  |
-|-------------------|-------|-------|
-|json               |1.49   |2.00   |
-|geojson            |6.74   |same   |
-|picogeojson        |1.84   |same\* |
-|picogeojson+ujson  |1.63   |0.31\* |
+|Module      |Read   |Write  |
+|------------|-------|-------|
+|json        |1.49   |2.00   |
+|geojson     |6.74   |same   |
+|picogeojson |1.63   |0.31\* |
 
 \*antimeridian cutting and polygon winding check set to `False`

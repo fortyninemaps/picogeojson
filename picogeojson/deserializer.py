@@ -1,13 +1,7 @@
 import os
 import copy
 
-try:
-    assert os.environ.get("PICOGEOJSON_PYJSON", "0") == "1"
-    import ujson as json
-    _INDENT = 0
-except (AssertionError, ImportError):
-    import json
-    _INDENT = None
+import ujson
 
 from .types import (Point, LineString, Polygon,
                     MultiPoint, MultiLineString, MultiPolygon,
@@ -51,16 +45,16 @@ class Deserializer(object):
             return self.fromfile(f)
 
     def fromstring(self, s):
-        return self.deserialize(json.loads(s))
+        return self.deserialize(ujson.loads(s))
 
     def fromfile(self, f):
         if hasattr(f, 'read'):
-            return self.deserialize(json.load(f))
+            return self.deserialize(ujson.load(f))
         elif hasattr(f, 'open'):
             with f.open() as f:
-                return self.deserialize(json.load(f))
+                return self.deserialize(ujson.load(f))
         with open(f) as f:
-            return self.deserialize(json.load(f))
+            return self.deserialize(ujson.load(f))
 
     def _parsePoint(self, d):
         crs = d.get("crs", self.defaultcrs)
