@@ -1,5 +1,3 @@
-from typing import TypeVar
-
 import ujson
 
 from .types import GeometryCollection, Feature, FeatureCollection
@@ -8,7 +6,7 @@ from .antimeridian import antimeridian_cut
 from .bbox import (geom_bbox, geometry_collection_bbox,
                    feature_bbox, feature_collection_bbox)
 
-from .identity import identity
+from .funcs import identity
 
 from .docstrings import docstring_insert
 

@@ -1,5 +1,3 @@
-from typing import Iterable
-
 def _isleft(p, p0, p1) -> bool:
     return ((p1[0]-p0[0])*(p[1]-p0[1]) - (p[0]-p0[0])*(p1[1]-p0[1])) > 0
 

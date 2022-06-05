@@ -3,6 +3,7 @@ from collections.abc import Iterable, Sequence
 
 from . import validators
 from .orientation import is_counterclockwise
+from .funcs import true
 
 def as_nested_lists(obj) -> list:
     """ Convert all but the lowest level of iterables to lists. """
@@ -42,9 +43,6 @@ def multipolygon_converter(obj) -> Sequence:
             if bool(i) is is_counterclockwise(ring):
                 obj[j][i] = ring[::-1]
     return obj
-
-def true(a):
-    return True
 
 class After(object):
     def after(self, func, cond=true):

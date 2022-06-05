@@ -1,4 +1,4 @@
-from typing import Iterable, Iterator
+from typing import Iterator
 
 from . import Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon, Feature
 from .types import true
