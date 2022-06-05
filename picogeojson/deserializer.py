@@ -10,7 +10,7 @@ from .types import (Point, LineString, Polygon,
 
 from .crs import DEFAULTCRS
 
-from .map import Map
+from .geojson import GeoJSON
 
 from .docstrings import docstring_insert
 
@@ -132,24 +132,24 @@ class Deserializer(object):
         return raw
 
     def deserialize(self, d):
-        return Map(self._deserialize(d))
+        return GeoJSON(self._deserialize(d))
 
 @docstring_insert(deserializer_args)
-def fromdict(dct: dict, **kw) -> Map:
+def fromdict(dct: dict, **kw) -> GeoJSON:
     """ Read a dictionary and return the GeoJSON object.
     {} """
     d = Deserializer(**kw)
     return d.deserialize(dct)
 
 @docstring_insert(deserializer_args)
-def fromfile(f: typing.TextIO, **kw) -> Map:
+def fromfile(f: typing.TextIO, **kw) -> GeoJSON:
     """ Read a JSON file and return the GeoJSON object.
     {} """
     d = Deserializer(**kw)
     return d.fromfile(f)
 
 @docstring_insert(deserializer_args)
-def fromstring(s: str, **kw) -> Map:
+def fromstring(s: str, **kw) -> GeoJSON:
     """ Read a JSON string and return the GeoJSON object.
     {} """
     d = Deserializer(**kw)

@@ -4,7 +4,7 @@ from .types import (Point, LineString, Polygon,
                     MultiPoint, MultiLineString, MultiPolygon,
                     GeometryCollection, Feature, FeatureCollection)
 
-from .map import Map
+from .geojson import GeoJSON
 
 from .deserializer import Deserializer, fromfile, fromstring, fromdict
 

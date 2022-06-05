@@ -14,10 +14,10 @@ from picogeojson import Serializer, Deserializer, DEFAULTCRS
 from picogeojson.transformations import merge, burst
 import picogeojson.bbox as bbox
 from picogeojson.serializer import fixed_precision
-from picogeojson.map import Map
+from picogeojson.geojson import GeoJSON
 
 from type_tests import ClosedRingTests, InvalidCoordTests, FuncTests, AfterTests, ValidatorTests
-from map_tests import MapTests
+from geojson_tests import GeoJSONTests
 
 TESTDATA = "tests/"
 
@@ -51,7 +51,7 @@ class DeserializerTests(unittest.TestCase):
 
     def test_shorthand_result(self):
         res = pico.fromfile(os.path.join(TESTDATA, 'point.json'))
-        self.assertEqual(type(res), Map)
+        self.assertEqual(type(res), GeoJSON)
         for pt in res.points:
             self.assertEqual(pt.coordinates, [100.0, 0.0])
         return
@@ -67,7 +67,7 @@ class DeserializerTests(unittest.TestCase):
         with open(os.path.join(TESTDATA, 'point.json'), 'r') as f:
             string = f.read()
         res = pico.fromstring(string)
-        self.assertEqual(type(res), Map)
+        self.assertEqual(type(res), GeoJSON)
         for pt in res.points:
             self.assertEqual(pt.coordinates, [100.0, 0.0])
         return

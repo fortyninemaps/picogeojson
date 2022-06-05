@@ -3,7 +3,7 @@ from typing import Iterator
 from . import Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon, Feature
 from .types import true
 
-class Map(object):
+class GeoJSON(object):
 
     def __init__(self, raw):
         self.raw = raw
@@ -20,7 +20,7 @@ class Map(object):
                     objs.append(geom)
 
     def after(self, func, cond=true):
-        return Map(self.raw.after(func, cond))
+        return GeoJSON(self.raw.after(func, cond))
 
     def map(self, func, typ):
         return self.after(
