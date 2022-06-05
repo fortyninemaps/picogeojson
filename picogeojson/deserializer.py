@@ -154,21 +154,3 @@ def fromstring(s: str, **kw) -> GeoJSON:
     {} """
     d = Deserializer(**kw)
     return d.fromstring(s)
-
-def features(f: typing.TextIO) -> typing.Iterator[Feature]:
-    raise NotImplementedError
-
-def polygons(f: typing.TextIO) -> typing.Iterator[Polygon]:
-    raise NotImplementedError
-
-def linestrings(f: typing.TextIO) -> typing.Iterator[LineString]:
-    raise NotImplementedError
-
-def points(f: typing.TextIO) -> typing.Iterator[Point]:
-    raise NotImplementedError
-
-def feature_collections(f: typing.TextIO) -> typing.Iterator[FeatureCollection]:
-    raise NotImplementedError
-
-def geometry_collections(f: typing.TextIO) -> typing.Iterator[GeometryCollection]:
-    raise NotImplementedError
