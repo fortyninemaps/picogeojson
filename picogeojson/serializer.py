@@ -1,4 +1,4 @@
-import os
+from typing import TypeVar
 
 import ujson
 
@@ -40,7 +40,7 @@ class Serializer(object):
         json_string = serializer(named_tuple)
 
     {}"""
-    def __init__(self, antimeridian_cutting=True, write_bbox=True, write_crs=False, precision=None):
+    def __init__(self, antimeridian_cutting: bool=True, write_bbox: bool=True, write_crs: bool=False, precision: int=None):
         self.antimeridian_cutting = antimeridian_cutting
         self.write_bbox = write_bbox
         self.write_crs = write_crs
@@ -85,7 +85,7 @@ class Serializer(object):
                 d["crs"] = geom.crs
             return d
 
-    def feature_asdict(self, feature, root=True):
+    def feature_asdict(self, feature: Feature, root: bool=True):
         d = {"type": "Feature",
              "geometry": self.geojson_asdict(feature.geometry, root=False),
              "properties": feature.properties}
@@ -130,21 +130,21 @@ class Serializer(object):
         return d
 
 @docstring_insert(serializer_args)
-def todict(geom, **kw):
+def todict(geom, **kw) -> dict:
     """ Serialize *geom* to a dictionary.
     {} """
     s = Serializer(**kw)
     return s.geojson_asdict(geom)
 
 @docstring_insert(serializer_args)
-def tostring(geom, **kw):
+def tostring(geom, **kw) -> str:
     """ Serialize *geom* to a JSON string.
     {} """
     s = Serializer(**kw)
     return s(geom)
 
 @docstring_insert(serializer_args)
-def tofile(geom, f, **kw):
+def tofile(geom, f, **kw) -> None:
     """ Serialize *geom* to a file.
     {} """
     if hasattr(f, "write"):
@@ -155,7 +155,6 @@ def tofile(geom, f, **kw):
     else:
         with open(f, "w") as fobj:
             fobj.write(tostring(geom, **kw))
-
 
 def fixed_precision(A, prec=6):
     """ Recursively convert nested iterables or coordinates to nested lists at

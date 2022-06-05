@@ -1,12 +1,8 @@
 import json
+import io
 import os
 import sys
 import unittest
-
-if sys.version_info.major >= 3:
-    from io import StringIO
-else:
-    from StringIO import StringIO
 
 try:
     import pathlib
@@ -185,7 +181,7 @@ class SerializerTests(unittest.TestCase):
 
     def test_shorthand_file(self):
         pt = pico.Point((44.0, 17.0), DEFAULTCRS)
-        f = StringIO()
+        f = io.StringIO()
         pico.tofile(pt, f)
         f.seek(0)
         pt2 = pico.fromfile(f).raw

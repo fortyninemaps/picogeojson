@@ -1,6 +1,7 @@
-from . import Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon
+from typing import Iterable, Iterator
+
+from . import Point, MultiPoint, LineString, MultiLineString, Polygon, MultiPolygon, Feature
 from .types import true
-from .serializer import Serializer
 
 class Map(object):
 
@@ -21,7 +22,7 @@ class Map(object):
     def after(self, func, cond=true):
         return Map(self.raw.after(func, cond))
 
-    def map(self, func, typ, **kw):
+    def map(self, func, typ):
         return self.after(
                 func,
                 lambda obj: type(obj).__name__ == typ.__name__,
@@ -39,7 +40,7 @@ class Map(object):
     def extract(self, typ, **kw):
         return self._geometry_getter(typ, **kw)
 
-    def extract_features(self, geometry_type=None, properties=None):
+    def extract_features(self, geometry_type=None, properties=None) -> Iterator[Feature]:
         """ Returns a generator for Features matching predicates.
 
         Parameters
@@ -94,6 +95,6 @@ class Map(object):
         """ Returns a generator yielding all MultiPolygon objects in the result. """
         return self._geometry_getter(MultiPolygon)
 
-def propmatch(testing, required):
+def propmatch(testing: dict, required: dict):
     return all(k in testing for k in required) and \
            all(testing[k] == v for k, v in required.items())

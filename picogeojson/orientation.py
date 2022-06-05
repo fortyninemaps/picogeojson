@@ -1,9 +1,10 @@
-# ensures that Polygon rings are counter-clockwise
+from typing import Iterable
 
-def _isleft(p, p0, p1):
+def _isleft(p, p0, p1) -> bool:
     return ((p1[0]-p0[0])*(p[1]-p0[1]) - (p[0]-p0[0])*(p1[1]-p0[1])) > 0
 
-def is_counterclockwise(ring):
+# ensures that Polygon rings are counter-clockwise
+def is_counterclockwise(ring) -> bool:
     incomplete_ring = ring[:-1]
     xmin = incomplete_ring[-1][0]
     ymin = incomplete_ring[-1][1]

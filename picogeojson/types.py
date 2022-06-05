@@ -1,16 +1,14 @@
 import attr
-from collections import Iterable
+from collections.abc import Iterable, Sequence
 
 from . import validators
 from .orientation import is_counterclockwise
-from .identity import identity
 
-def as_nested_lists(obj):
+def as_nested_lists(obj) -> list:
     """ Convert all but the lowest level of iterables to lists. """
-    if not isinstance(obj, Iterable) or not isinstance(obj[0], Iterable):
-        return obj
-    else:
-        return [as_nested_lists(a) for a in obj]
+    def is_coords(a) -> bool:
+        return isinstance(a, Sequence) and isinstance(a[0], Sequence)
+    return [as_nested_lists(a) if is_coords(a) else a for a in obj]
 
 def close_rings_inplace(obj):
     """ Ensure rings in a list of lists are closed. """
@@ -28,7 +26,7 @@ def close_rings_inplace(obj):
 def as_closed_lists(obj):
     return close_rings_inplace(as_nested_lists(obj))
 
-def polygon_converter(obj):
+def polygon_converter(obj) -> Sequence:
     """ Ensure that rings are closed and correctly oriented. """
     obj = close_rings_inplace(as_nested_lists(obj))
     for i, ring in enumerate(obj):
@@ -36,7 +34,7 @@ def polygon_converter(obj):
             obj[i] = ring[::-1]
     return obj
 
-def multipolygon_converter(obj):
+def multipolygon_converter(obj) -> Sequence:
     """ Ensure that rings closed and correctly oriented. """
     obj = close_rings_inplace(as_nested_lists(obj))
     for j, cx in enumerate(obj):

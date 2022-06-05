@@ -1,7 +1,8 @@
-import os
 import copy
 
 import ujson
+
+import typing
 
 from .types import (Point, LineString, Polygon,
                     MultiPoint, MultiLineString, MultiPolygon,
@@ -134,23 +135,40 @@ class Deserializer(object):
         return Map(self._deserialize(d))
 
 @docstring_insert(deserializer_args)
-def fromdict(dct, **kw):
+def fromdict(dct: dict, **kw) -> Map:
     """ Read a dictionary and return the GeoJSON object.
     {} """
     d = Deserializer(**kw)
     return d.deserialize(dct)
 
 @docstring_insert(deserializer_args)
-def fromfile(f, **kw):
+def fromfile(f: typing.TextIO, **kw) -> Map:
     """ Read a JSON file and return the GeoJSON object.
     {} """
     d = Deserializer(**kw)
     return d.fromfile(f)
 
 @docstring_insert(deserializer_args)
-def fromstring(s, **kw):
+def fromstring(s: str, **kw) -> Map:
     """ Read a JSON string and return the GeoJSON object.
     {} """
     d = Deserializer(**kw)
     return d.fromstring(s)
 
+def features(f: typing.TextIO) -> typing.Iterator[Feature]:
+    raise NotImplementedError
+
+def polygons(f: typing.TextIO) -> typing.Iterator[Polygon]:
+    raise NotImplementedError
+
+def linestrings(f: typing.TextIO) -> typing.Iterator[LineString]:
+    raise NotImplementedError
+
+def points(f: typing.TextIO) -> typing.Iterator[Point]:
+    raise NotImplementedError
+
+def feature_collections(f: typing.TextIO) -> typing.Iterator[FeatureCollection]:
+    raise NotImplementedError
+
+def geometry_collections(f: typing.TextIO) -> typing.Iterator[GeometryCollection]:
+    raise NotImplementedError
